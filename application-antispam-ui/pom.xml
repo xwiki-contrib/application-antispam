@@ -27,32 +27,50 @@
     <artifactId>application-antispam</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>application-antispam-api</artifactId>
-  <name>AntiSpam Tools API</name>
-  <description>Various APIs to find and clean spammed pages</description>
+  <artifactId>application-antispam-ui</artifactId>
+  <name>AntiSpam Tool Application</name>
+  <packaging>xar</packaging>
   <properties>
+    <!-- Don't run CLIRR here since there's no Java code. -->
+    <xwiki.clirr.skip>true</xwiki.clirr.skip>
     <xwiki.extension.category>application</xwiki.extension.category>
   </properties>
   <dependencies>
     <dependency>
-      <groupId>org.xwiki.commons</groupId>
-      <artifactId>xwiki-commons-component-api</artifactId>
-      <version>${commons.version}</version>
+      <groupId>org.xwiki.contrib</groupId>
+      <artifactId>application-antispam-api</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-model</artifactId>
+      <artifactId>xwiki-platform-rendering-macro-velocity</artifactId>
       <version>${platform.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-query-manager</artifactId>
+      <groupId>org.xwiki.rendering</groupId>
+      <artifactId>xwiki-rendering-macro-html</artifactId>
       <version>${platform.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-search-solr-query</artifactId>
-      <version>${platform.version}</version>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
+  <build>
+    <!-- Needed to add support for the XAR packaging -->
+    <extensions>
+      <extension>
+        <groupId>org.xwiki.commons</groupId>
+        <artifactId>xwiki-commons-tool-xar-handlers</artifactId>
+        <version>${commons.version}</version>
+      </extension>
+    </extensions>
+    <plugins>
+      <!-- The XAR packaging uses the XAR plugin and thus we need to define what version to use -->
+      <plugin>
+        <groupId>org.xwiki.commons</groupId>
+        <artifactId>xwiki-commons-tool-xar-plugin</artifactId>
+        <version>${commons.version}</version>
+      </plugin>
+    </plugins>
+  </build>
 </project>
