@@ -47,6 +47,7 @@
   </scm>
   <modules>
     <module>application-antispam-api</module>
+    <module>application-antispam-simple</module>
     <module>application-antispam-ui</module>
   </modules>
   <developers>

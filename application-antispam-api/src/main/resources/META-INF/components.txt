@@ -1,2 +1,2 @@
-org.xwiki.contrib.antispam.internal.DefaultAntiSpam
+org.xwiki.contrib.antispam.internal.DefaultSpamCleaner
 org.xwiki.contrib.antispam.script.AntiSpamScriptService

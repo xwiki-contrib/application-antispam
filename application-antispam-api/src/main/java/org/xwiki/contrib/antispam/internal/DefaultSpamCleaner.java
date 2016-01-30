@@ -41,7 +41,7 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.component.util.DefaultParameterizedType;
-import org.xwiki.contrib.antispam.AntiSpam;
+import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
@@ -65,7 +65,7 @@ import com.xpn.xwiki.doc.rcs.XWikiRCSNodeInfo;
 
 @Component
 @Singleton
-public class DefaultAntiSpam implements AntiSpam
+public class DefaultSpamCleaner implements SpamCleaner
 {
     @Inject
     Logger logger;

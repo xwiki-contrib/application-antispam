@@ -28,7 +28,7 @@ import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
 @Role
-public interface AntiSpam
+public interface SpamCleaner
 {
     /**
      * Get references and last authors of all documents matching a given solr query string.

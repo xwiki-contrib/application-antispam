@@ -31,7 +31,7 @@
   <name>AntiSpam Tools API</name>
   <description>Various APIs to find and clean spammed pages</description>
   <properties>
-    <xwiki.extension.category>application</xwiki.extension.category>
+    <xwiki.extension.category>api</xwiki.extension.category>
   </properties>
   <dependencies>
     <dependency>

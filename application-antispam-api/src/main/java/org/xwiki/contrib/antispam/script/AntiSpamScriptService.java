@@ -19,16 +19,22 @@
  */
 package org.xwiki.contrib.antispam.script;
 
+import java.io.StringReader;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.antispam.AntiSpam;
+import org.xwiki.component.manager.ComponentLookupException;
+import org.xwiki.component.manager.ComponentManager;
+import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
@@ -37,36 +43,52 @@ import org.xwiki.security.authorization.Right;
 
 @Component
 @Named("antispam")
-public class AntiSpamScriptService implements ScriptService, AntiSpam
+public class AntiSpamScriptService implements ScriptService
 {
     @Inject
-    private AntiSpam antiSpam;
+    private SpamCleaner cleaner;
+
+    @Inject
+    @Named("context")
+    private Provider<ComponentManager> componentManagerProvider;
 
     @Inject
     private ContextualAuthorizationManager authorizationManager;
 
-    @Override
     public Pair<List<DocumentReference>, Set<DocumentReference>> getMatchingDocuments(String solrQueryString, int nb,
         int offset) throws AntiSpamException
     {
-        return this.antiSpam.getMatchingDocuments(solrQueryString, nb, offset);
+        return this.cleaner.getMatchingDocuments(solrQueryString, nb, offset);
     }
 
-    @Override
     public void cleanDocument(DocumentReference documentReference, Collection<DocumentReference> authorReferences,
         boolean skipActivityStream) throws AntiSpamException
     {
         if (this.authorizationManager.hasAccess(Right.PROGRAM)) {
-            this.antiSpam.cleanDocument(documentReference, authorReferences, skipActivityStream);
+            this.cleaner.cleanDocument(documentReference, authorReferences, skipActivityStream);
         } else {
             throw new AntiSpamException("You need Programming Rights to access this api");
         }
     }
 
-    @Override
     public List<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
         throws AntiSpamException
     {
-        return this.antiSpam.getDocumentsForAuthor(authorReference, nb, offset);
+        return this.cleaner.getDocumentsForAuthor(authorReference, nb, offset);
+    }
+
+    public boolean isSpam(String checkerHint, String content, Map<String, Object> parameters) throws AntiSpamException
+    {
+        return getSpamChecker(checkerHint).isSpam(new StringReader(content), parameters);
+    }
+
+    private SpamChecker getSpamChecker(String hint) throws AntiSpamException
+    {
+        try {
+            return this.componentManagerProvider.get().getInstance(SpamChecker.class, hint);
+        } catch (ComponentLookupException e) {
+            throw new AntiSpamException(String.format("Spam checker for hint [%s] is not available in the system.",
+                hint), e);
+        }
     }
 }

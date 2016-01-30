@@ -1,0 +1,2 @@
+org.xwiki.contrib.antispam.internal.simple.SimpleSpamChecker
+org.xwiki.contrib.antispam.internal.simple.DefaultSpamCheckerModel
