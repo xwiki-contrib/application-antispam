@@ -29,7 +29,7 @@
   </parent>
   <artifactId>application-antispam-api</artifactId>
   <name>AntiSpam Tools API</name>
-  <description>Various APIs to find and clean spammed pages</description>
+  <description>Spam cleaning and Spam checking APIs</description>
   <properties>
     <xwiki.extension.category>api</xwiki.extension.category>
   </properties>

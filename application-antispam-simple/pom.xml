@@ -29,7 +29,7 @@
   </parent>
   <artifactId>application-antispam-simple</artifactId>
   <name>AntiSpam Tools - Simple Spam Checker</name>
-  <description>Checks for spam using various techniques (keywords, IPs, etc)</description>
+  <description>Checks for spam using banned keywords and IP addresses</description>
   <properties>
     <xwiki.extension.category>api</xwiki.extension.category>
   </properties>
@@ -38,6 +38,10 @@
       <groupId>org.xwiki.contrib</groupId>
       <artifactId>application-antispam-api</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
     </dependency>
   </dependencies>
 </project>
