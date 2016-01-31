@@ -35,4 +35,12 @@ public interface SpamCheckerModel
     List<String> getSpamKeywords() throws AntiSpamException;
 
     boolean isSpamKeywordDocument(DocumentReference reference);
+
+    boolean isDisabledUserDocument(DocumentReference reference);
+
+    void logSpamAddress(String ip) throws AntiSpamException;
+
+    void logDisabledUser(DocumentReference authorReference) throws AntiSpamException;
+
+    void disableUser(DocumentReference authorReference) throws AntiSpamException;
 }

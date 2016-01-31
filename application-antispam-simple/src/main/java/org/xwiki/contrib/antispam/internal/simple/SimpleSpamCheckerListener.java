@@ -38,6 +38,7 @@ import org.xwiki.container.Request;
 import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.observation.EventListener;
 import org.xwiki.observation.event.CancelableEvent;
 import org.xwiki.observation.event.Event;
@@ -50,6 +51,8 @@ import com.xpn.xwiki.doc.XWikiDocument;
 @Singleton
 public class SimpleSpamCheckerListener implements EventListener
 {
+    private static final String XCONTEXT_MARKER_KEY = "simpleSpamCheckerListener";
+
     @Inject
     private Logger logger;
 
@@ -82,19 +85,28 @@ public class SimpleSpamCheckerListener implements EventListener
             return;
         }
 
+        // If we're already handling a document then don't check any other triggered indirectly since it's not required
+        // and it would generate infinite loops...
+        XWikiContext xcontext = (XWikiContext) data;
+        if (xcontext.containsKey(XCONTEXT_MARKER_KEY)) {
+            return;
+        }
+
         XWikiDocument document = (XWikiDocument) source;
 
-        // Don't check for spam when editing the Keyworsd and IP address documents as they contain spam keywords and IP!
+        // Don't check for spam when editing one of the documents managed by this tool
         if (this.model.isSpamAddressDocument(document.getDocumentReference())
-            || this.model.isSpamKeywordDocument(document.getDocumentReference()))
+            || this.model.isSpamKeywordDocument(document.getDocumentReference())
+            || this.model.isDisabledUserDocument(document.getDocumentReference()))
         {
             return;
         }
 
         Map<String, Object> parameters = Collections.emptyMap();
+        String ip = null;
         Request request = this.container.getRequest();
         if (request instanceof ServletRequest) {
-            String ip =  ((ServletRequest) request).getHttpServletRequest().getRemoteAddr();
+            ip =  ((ServletRequest) request).getHttpServletRequest().getRemoteAddr();
             parameters = Collections.singletonMap("ip", (Object) ip);
         }
 
@@ -102,14 +114,26 @@ public class SimpleSpamCheckerListener implements EventListener
             // TODO: Also check xobjects. Use case #1: spam in comments
             boolean isSpam = this.checker.isSpam(new StringReader(document.getContent()), parameters);
             if (isSpam) {
+                // Mark that we're handling some spam so that when we save documents in the process they're not
+                // processed as spam which could lead to infinite recursions.
+                xcontext.put(XCONTEXT_MARKER_KEY, true);
+
                 // Cancel the event
                 if (event instanceof CancelableEvent) {
                     ((CancelableEvent) event).cancel(String.format("The content of [%s] is considered to be spam",
                         document.getDocumentReference()));
-                    // TODO:
-                    // - Add the IP address to the list of known spammer ip addresses
-                    // - Disable the user and add its reference to the list of spam users
-                    //XWikiContext xcontext = (XWikiContext) data;
+                }
+
+                // Disable the user
+                DocumentReference currentUserReference = xcontext.getUserReference();
+                this.model.disableUser(currentUserReference);
+
+                // Add the user to a list of disabled users because they tried adding some spam
+                this.model.logDisabledUser(currentUserReference);
+
+                // Add the IP to the list of spammers
+                if (ip != null) {
+                    this.model.logSpamAddress(ip);
                 }
             }
         } catch (AntiSpamException e) {
