@@ -92,6 +92,11 @@ public class SimpleSpamCheckerListener implements EventListener
             return;
         }
 
+        // Check that spam checking is active and if not, then return
+        if (!this.model.iSpamCheckingActive()) {
+            return;
+        }
+
         XWikiDocument document = (XWikiDocument) source;
 
         // Don't check for spam when editing one of the documents managed by this tool

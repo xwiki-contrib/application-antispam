@@ -43,4 +43,6 @@ public interface SpamCheckerModel
     void logDisabledUser(DocumentReference authorReference) throws AntiSpamException;
 
     void disableUser(DocumentReference authorReference) throws AntiSpamException;
+
+    boolean iSpamCheckingActive();
 }

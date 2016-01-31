@@ -27,6 +27,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.model.EntityType;
@@ -52,8 +53,17 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     private static final EntityReference DISABLED_USERS_DOCUMENT_REFERENCE = new EntityReference("DisabledUsers",
         EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
 
+    private static final EntityReference CONFIG_DOCUMENT_REFERENCE = new EntityReference("AntiSpamConfig",
+        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+
     private static final EntityReference USER_XCLASS_REFERENCE = new EntityReference("XWikiUsers",
         EntityType.DOCUMENT, new EntityReference("XWiki", EntityType.SPACE));
+
+    private static final EntityReference CONFIG_XCLASS_REFERENCE = new EntityReference("AntiSpamConfigClass",
+        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+
+    @Inject
+    private Logger logger;
 
     @Inject
     private Provider<XWikiContext> contextProvider;
@@ -164,6 +174,29 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             throw new AntiSpamException(String.format("Failed to log disabled spam user [%s] to [%s]",
                 authorReference, DISABLED_USERS_DOCUMENT_REFERENCE.toString()), e);
         }
+    }
+
+    @Override
+    public boolean iSpamCheckingActive()
+    {
+        boolean isSpamCheckingActive;
+        try {
+            XWikiContext xcontext = getXWikiContext();
+            XWikiDocument configDocument = getDocument(CONFIG_DOCUMENT_REFERENCE, xcontext);
+            BaseObject configObject = configDocument.getXObject(CONFIG_XCLASS_REFERENCE);
+            if (configObject != null) {
+                int active = configObject.getIntValue("active");
+                // By default spam checking is true, unless set to false
+                isSpamCheckingActive = active == 0 ? false : true;
+            } else {
+                // No xobject, we consider it's active
+                isSpamCheckingActive = true;
+            }
+        } catch (Exception e) {
+            this.logger.error("Failed to access AntiSpam configuration", e);
+            isSpamCheckingActive = true;
+        }
+        return isSpamCheckingActive;
     }
 
     private XWikiDocument getDocument(EntityReference reference, XWikiContext xcontext) throws Exception
