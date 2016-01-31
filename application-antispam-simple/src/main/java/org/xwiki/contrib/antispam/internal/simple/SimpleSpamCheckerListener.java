@@ -58,6 +58,9 @@ public class SimpleSpamCheckerListener implements EventListener
     private SpamChecker checker;
 
     @Inject
+    private SpamCheckerModel model;
+
+    @Inject
     private Container container;
 
     @Override
@@ -80,6 +83,13 @@ public class SimpleSpamCheckerListener implements EventListener
         }
 
         XWikiDocument document = (XWikiDocument) source;
+
+        // Don't check for spam when editing the Keyworsd and IP address documents as they contain spam keywords and IP!
+        if (this.model.isSpamAddressDocument(document.getDocumentReference())
+            || this.model.isSpamKeywordDocument(document.getDocumentReference()))
+        {
+            return;
+        }
 
         Map<String, Object> parameters = Collections.emptyMap();
         Request request = this.container.getRequest();

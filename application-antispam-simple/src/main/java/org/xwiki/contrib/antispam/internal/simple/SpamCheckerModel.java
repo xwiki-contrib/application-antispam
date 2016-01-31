@@ -23,11 +23,16 @@ import java.util.List;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.contrib.antispam.AntiSpamException;
+import org.xwiki.model.reference.DocumentReference;
 
 @Role
 public interface SpamCheckerModel
 {
     List<String> getSpamAddresses() throws AntiSpamException;
 
+    boolean isSpamAddressDocument(DocumentReference reference);
+
     List<String> getSpamKeywords() throws AntiSpamException;
+
+    boolean isSpamKeywordDocument(DocumentReference reference);
 }

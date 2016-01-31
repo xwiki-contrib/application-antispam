@@ -30,6 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.model.EntityType;
+import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
 
 import com.xpn.xwiki.XWiki;
@@ -77,6 +78,20 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
                 KEYWORDS_DOCUMENT_REFERENCE.toString()), e);
         }
         return keywords;
+    }
+
+    @Override
+    public boolean isSpamAddressDocument(DocumentReference reference)
+    {
+        return reference.getName().equals(ADDRESSES_DOCUMENT_REFERENCE.getName())
+            && reference.getParent().getName().equals(ADDRESSES_DOCUMENT_REFERENCE.getParent().getName());
+    }
+
+    @Override
+    public boolean isSpamKeywordDocument(DocumentReference reference)
+    {
+        return reference.getName().equals(KEYWORDS_DOCUMENT_REFERENCE.getName())
+            && reference.getParent().getName().equals(KEYWORDS_DOCUMENT_REFERENCE.getParent().getName());
     }
 
     private XWikiDocument getDocument(EntityReference reference) throws Exception
