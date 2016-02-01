@@ -21,7 +21,7 @@ package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.StringReader;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,15 +113,21 @@ public class SimpleSpamCheckerListener implements EventListener
             return;
         }
 
-        Map<String, Object> parameters = Collections.emptyMap();
+        Map<String, Object> parameters = new HashMap<>();
+
+        // Add the IP to the parameters so that content created by known spammer IP can always be considered as spam
         String ip = extractIP();
         if (ip != null) {
-            parameters = Collections.singletonMap("ip", (Object) ip);
+            parameters.put("ip", ip);
         }
 
         try {
             // TODO: Also check xobjects. Use case #1: spam in comments
-            boolean isSpam = this.checker.isSpam(new StringReader(document.getContent()), parameters);
+
+            // Add the title for checking for spam by adding to the content to be checked
+            String contentToCheck = document.getTitle() + "\n" + document.getContent();
+
+            boolean isSpam = this.checker.isSpam(new StringReader(contentToCheck), parameters);
             if (isSpam) {
                 // Mark that we're handling some spam so that when we save documents in the process they're not
                 // processed as spam which could lead to infinite recursions.

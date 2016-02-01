@@ -46,7 +46,7 @@ public class SimpleSpamChecker implements SpamChecker
     @Override
     public boolean isSpam(Reader content, Map<String, Object> parameters) throws AntiSpamException
     {
-        // Strategy 1: Check for known IP addresses of spammers. Consider that all content created by a spammer ip to
+        // Step 1: Check for known IP addresses of spammers. Consider that all content created by a spammer ip to
         //             be spam.
         String ip = (String) parameters.get(IP_PARAMETER);
         if (ip != null) {
@@ -55,7 +55,7 @@ public class SimpleSpamChecker implements SpamChecker
             }
         }
 
-        // Strategy 2: Check for known spam keywords
+        // Step 2: Check for known spam keywords in the content
         try {
             String contentAsString = IOUtils.toString(content);
             List<String> keywords = this.model.getSpamKeywords();
