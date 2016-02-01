@@ -39,4 +39,6 @@ public interface SpamCheckerModel
     void disableUser(DocumentReference authorReference) throws AntiSpamException;
 
     boolean iSpamCheckingActive();
+
+    List<String> getExcludedSpaces();
 }

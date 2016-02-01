@@ -20,6 +20,7 @@
 package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -66,6 +67,9 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
 
     private static final DocumentReference CONFIG_XCLASS_REFERENCE =
         new DocumentReference("xwiki", "AntiSpam", "AntiSpamConfigClass");
+
+    private static final DocumentReference EXCLUDES_DOCUMENT_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "Excludes");
 
     @Inject
     private Logger logger;
@@ -189,6 +193,22 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             isSpamCheckingActive = true;
         }
         return isSpamCheckingActive;
+    }
+
+    @Override
+    public List<String> getExcludedSpaces()
+    {
+        List<String> excludes;
+        try {
+            XWikiContext xcontext = getXWikiContext();
+            XWikiDocument excludesDocument = getDocument(EXCLUDES_DOCUMENT_REFERENCE, xcontext);
+            excludes = IOUtils.readLines(new StringReader(excludesDocument.getContent()));
+        } catch (Exception e) {
+            this.logger.error("Failed to get document containing excludes [{}]",
+                EXCLUDES_DOCUMENT_REFERENCE.toString(), e);
+            excludes = Collections.emptyList();
+        }
+        return excludes;
     }
 
     private XWikiDocument getDocument(EntityReference reference, XWikiContext xcontext) throws Exception

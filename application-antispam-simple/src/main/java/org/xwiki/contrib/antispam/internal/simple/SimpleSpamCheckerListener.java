@@ -39,6 +39,7 @@ import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.observation.EventListener;
 import org.xwiki.observation.event.CancelableEvent;
 import org.xwiki.observation.event.Event;
@@ -65,6 +66,9 @@ public class SimpleSpamCheckerListener implements EventListener
 
     @Inject
     private Container container;
+
+    @Inject
+    private EntityReferenceSerializer<String> entityReferenceSerializer;
 
     @Override
     public String getName()
@@ -99,8 +103,11 @@ public class SimpleSpamCheckerListener implements EventListener
 
         XWikiDocument document = (XWikiDocument) source;
 
-        // Don't check for spam when editing a page located in the AntiSpam space
-        if (document.getDocumentReference().getLastSpaceReference().getName().equals("AntiSpam")) {
+        // Don't check for spam when editing a page located in the AntiSpam space & in any excluded spaces
+        if (document.getDocumentReference().getLastSpaceReference().getName().equals("AntiSpam")
+            || this.model.getExcludedSpaces().contains(this.entityReferenceSerializer.serialize(
+            document.getDocumentReference().getParent())))
+        {
             return;
         }
 
