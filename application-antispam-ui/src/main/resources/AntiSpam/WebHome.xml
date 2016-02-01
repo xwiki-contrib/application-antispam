@@ -70,7 +70,7 @@
   ## Note: we make sure to surround the query string by quotes to avoid users deleting unwanted pages
   ## (since searching for example for "mcafee phone" without the quotes will search for documents 
   ## containing "mcafee" OR "phone").
-  #set ($result = $services.antispam.getMatchingDocuments("""$request.query""", 500, 0))
+  #set ($result = $services.antispam.getMatchingDocuments("""$request.query"" AND -id:xwiki\:AntiSpam.Keywords_*", 500, 0))
   #set ($matchingDocumentReferences = $result.getLeft())
   #set ($matchingAuthorReferences = $result.getRight())
   #foreach ($matchingDocumentReference in $matchingDocumentReferences)
