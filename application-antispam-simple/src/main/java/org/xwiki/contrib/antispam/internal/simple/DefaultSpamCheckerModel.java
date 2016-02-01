@@ -177,9 +177,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     {
         boolean isSpamCheckingActive;
         try {
-            XWikiContext xcontext = getXWikiContext();
-            XWikiDocument configDocument = getDocument(CONFIG_DOCUMENT_REFERENCE, xcontext);
-            BaseObject configObject = configDocument.getXObject(CONFIG_XCLASS_REFERENCE);
+            BaseObject configObject = getConfigOject();
             if (configObject != null) {
                 int active = configObject.getIntValue("active");
                 // By default spam checking is true, unless set to false
@@ -196,6 +194,26 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     }
 
     @Override
+    public int getXFFHeaderIPPosition()
+    {
+        int position;
+        try {
+            BaseObject configObject = getConfigOject();
+            if (configObject != null) {
+                // 0 means last position in the XFF header list
+                // 1 means last but one position in the XFF header list
+                position = configObject.getIntValue("xffHeaderIPPosition", -1);
+            } else {
+                position = -1;
+            }
+        } catch (Exception e) {
+            this.logger.error("Failed to get XFF header IP position", e);
+            position = -1;
+        }
+        return position;
+    }
+
+    @Override
     public List<String> getExcludedSpaces()
     {
         List<String> excludes;
@@ -209,6 +227,13 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             excludes = Collections.emptyList();
         }
         return excludes;
+    }
+
+    private BaseObject getConfigOject() throws Exception
+    {
+        XWikiContext xcontext = getXWikiContext();
+        XWikiDocument configDocument = getDocument(CONFIG_DOCUMENT_REFERENCE, xcontext);
+        return configDocument.getXObject(CONFIG_XCLASS_REFERENCE);
     }
 
     private XWikiDocument getDocument(EntityReference reference, XWikiContext xcontext) throws Exception

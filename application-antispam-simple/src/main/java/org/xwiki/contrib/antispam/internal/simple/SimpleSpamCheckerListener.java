@@ -28,7 +28,9 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.xwiki.bridge.event.DocumentCreatingEvent;
 import org.xwiki.bridge.event.DocumentUpdatingEvent;
@@ -112,10 +114,8 @@ public class SimpleSpamCheckerListener implements EventListener
         }
 
         Map<String, Object> parameters = Collections.emptyMap();
-        String ip = null;
-        Request request = this.container.getRequest();
-        if (request instanceof ServletRequest) {
-            ip =  ((ServletRequest) request).getHttpServletRequest().getRemoteAddr();
+        String ip = extractIP();
+        if (ip != null) {
             parameters = Collections.singletonMap("ip", (Object) ip);
         }
 
@@ -149,5 +149,35 @@ public class SimpleSpamCheckerListener implements EventListener
             // We failed to check if the content is spam or not, let is go through but log an error
             logger.error("Failed to check for spam in content of [{}]", document.getDocumentReference(), e);
         }
+    }
+
+    private String extractIP()
+    {
+        String ip = null;
+        Request request = this.container.getRequest();
+        if (request instanceof ServletRequest) {
+            // First check if there's a XFF header
+            // See https://en.wikipedia.org/wiki/X-Forwarded-For
+            HttpServletRequest servletRequest = ((ServletRequest) request).getHttpServletRequest();
+            String xffHeaderValue = servletRequest.getHeader("X-Forwarded-For");
+            if (!StringUtils.isBlank(xffHeaderValue)) {
+                // The header value is a list and we need to take the right IP. Deciding which one to take depends on
+                // the setup. If XWiki is behind a proxy then the right IP to use is the last but one, otherwise, it's
+                // the last one (if XWiki is behind 2 proxies then it's the one before the last but one, etc).
+                // Since this cannot be guessed, we've left it to the user of this extension to configure.
+                int position = this.model.getXFFHeaderIPPosition();
+                String[] ips = StringUtils.split(xffHeaderValue, ", ");
+                if (position >= 0 && (ips.length - 1 - position >= 0)) {
+                    ip = ips[ips.length - 1 - position];
+                } else {
+                    // No position defined or invalid position, default to the first one!
+                    ip = ips[0];
+                }
+            }
+            if (ip == null) {
+                ip = servletRequest.getRemoteAddr();
+            }
+        }
+        return ip;
     }
 }

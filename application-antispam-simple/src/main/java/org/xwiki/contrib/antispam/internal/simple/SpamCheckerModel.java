@@ -41,4 +41,6 @@ public interface SpamCheckerModel
     boolean iSpamCheckingActive();
 
     List<String> getExcludedSpaces();
+
+    int getXFFHeaderIPPosition();
 }
