@@ -60,7 +60,7 @@ public class SimpleSpamChecker implements SpamChecker
             String contentAsString = IOUtils.toString(content);
             List<String> keywords = this.model.getSpamKeywords();
             if (!keywords.isEmpty()) {
-                String regex = String.format("(?s)^.*?(%s).*$", StringUtils.join(keywords, '|'));
+                String regex = String.format("(?s)(?i)^.*?(%s).*$", StringUtils.join(keywords, '|'));
                 if (contentAsString.matches(regex)) {
                     return true;
                 }
