@@ -34,6 +34,8 @@ import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
+import org.xwiki.model.reference.SpaceReference;
+import org.xwiki.model.reference.WikiReference;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -44,23 +46,26 @@ import com.xpn.xwiki.objects.BaseObject;
 @Singleton
 public class DefaultSpamCheckerModel implements SpamCheckerModel
 {
-    private static final EntityReference ADDRESSES_DOCUMENT_REFERENCE = new EntityReference("IPAddresses",
-        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+    private static final DocumentReference ADDRESSES_DOCUMENT_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "IPAddresses");
 
-    private static final EntityReference KEYWORDS_DOCUMENT_REFERENCE = new EntityReference("Keywords",
-        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+    private static final DocumentReference KEYWORDS_DOCUMENT_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "Keywords");
 
-    private static final EntityReference DISABLED_USERS_DOCUMENT_REFERENCE = new EntityReference("DisabledUsers",
-        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+    private static final SpaceReference KEYWORDS_SPACE_REFERENCE =
+        new SpaceReference("AntiSpam", new WikiReference("xwiki"));
 
-    private static final EntityReference CONFIG_DOCUMENT_REFERENCE = new EntityReference("AntiSpamConfig",
-        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+    private static final DocumentReference DISABLED_USERS_DOCUMENT_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "DisabledUsers");
+
+    private static final DocumentReference CONFIG_DOCUMENT_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "AntiSpamConfig");
 
     private static final EntityReference USER_XCLASS_REFERENCE = new EntityReference("XWikiUsers",
         EntityType.DOCUMENT, new EntityReference("XWiki", EntityType.SPACE));
 
-    private static final EntityReference CONFIG_XCLASS_REFERENCE = new EntityReference("AntiSpamConfigClass",
-        EntityType.DOCUMENT, new EntityReference("AntiSpam", EntityType.SPACE));
+    private static final DocumentReference CONFIG_XCLASS_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "AntiSpamConfigClass");
 
     @Inject
     private Logger logger;
@@ -93,7 +98,13 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         List<String> keywords;
         try {
             XWikiContext xcontext = getXWikiContext();
-            XWikiDocument keywordsDocument = getDocument(KEYWORDS_DOCUMENT_REFERENCE, xcontext);
+            // Is there a current-wiki-specific keywords list?
+            DocumentReference wikiKeywordsReference = new DocumentReference(
+                String.format("Keywords-%s", xcontext.getWikiId()), KEYWORDS_SPACE_REFERENCE);
+            XWikiDocument keywordsDocument = getDocument(wikiKeywordsReference, xcontext);
+            if (keywordsDocument.isNew()) {
+                keywordsDocument = getDocument(KEYWORDS_DOCUMENT_REFERENCE, xcontext);
+            }
             // Parse the Keywords from the content
             keywords = IOUtils.readLines(new StringReader(keywordsDocument.getContent()));
         } catch (Exception e) {
@@ -101,27 +112,6 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
                 KEYWORDS_DOCUMENT_REFERENCE.toString()), e);
         }
         return keywords;
-    }
-
-    @Override
-    public boolean isSpamAddressDocument(DocumentReference reference)
-    {
-        return reference.getName().equals(ADDRESSES_DOCUMENT_REFERENCE.getName())
-            && reference.getParent().getName().equals(ADDRESSES_DOCUMENT_REFERENCE.getParent().getName());
-    }
-
-    @Override
-    public boolean isSpamKeywordDocument(DocumentReference reference)
-    {
-        return reference.getName().equals(KEYWORDS_DOCUMENT_REFERENCE.getName())
-            && reference.getParent().getName().equals(KEYWORDS_DOCUMENT_REFERENCE.getParent().getName());
-    }
-
-    @Override
-    public boolean isDisabledUserDocument(DocumentReference reference)
-    {
-        return reference.getName().equals(DISABLED_USERS_DOCUMENT_REFERENCE.getName())
-            && reference.getParent().getName().equals(DISABLED_USERS_DOCUMENT_REFERENCE.getParent().getName());
     }
 
     @Override
@@ -148,9 +138,11 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument authorDocument = getDocument(authorReference, xcontext);
-            BaseObject xwikiUserObject = authorDocument.getXObject(USER_XCLASS_REFERENCE);
-            xwikiUserObject.set("active", 0, xcontext);
-            getXWiki(xcontext).saveDocument(authorDocument, "Disabling user considered as spammer", true, xcontext);
+            if (!authorDocument.isNew()) {
+                BaseObject xwikiUserObject = authorDocument.getXObject(USER_XCLASS_REFERENCE);
+                xwikiUserObject.set("active", 0, xcontext);
+                getXWiki(xcontext).saveDocument(authorDocument, "Disabling user considered as spammer", true, xcontext);
+            }
         } catch (Exception e) {
             throw new AntiSpamException(String.format("Failed to disable user [%s]", authorReference), e);
         }

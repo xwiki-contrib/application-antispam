@@ -99,11 +99,8 @@ public class SimpleSpamCheckerListener implements EventListener
 
         XWikiDocument document = (XWikiDocument) source;
 
-        // Don't check for spam when editing one of the documents managed by this tool
-        if (this.model.isSpamAddressDocument(document.getDocumentReference())
-            || this.model.isSpamKeywordDocument(document.getDocumentReference())
-            || this.model.isDisabledUserDocument(document.getDocumentReference()))
-        {
+        // Don't check for spam when editing a page located in the AntiSpam space
+        if (document.getDocumentReference().getLastSpaceReference().getName().equals("AntiSpam")) {
             return;
         }
 

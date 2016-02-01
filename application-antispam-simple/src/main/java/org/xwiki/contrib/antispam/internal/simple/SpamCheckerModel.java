@@ -30,13 +30,7 @@ public interface SpamCheckerModel
 {
     List<String> getSpamAddresses() throws AntiSpamException;
 
-    boolean isSpamAddressDocument(DocumentReference reference);
-
     List<String> getSpamKeywords() throws AntiSpamException;
-
-    boolean isSpamKeywordDocument(DocumentReference reference);
-
-    boolean isDisabledUserDocument(DocumentReference reference);
 
     void logSpamAddress(String ip) throws AntiSpamException;
 
