@@ -43,11 +43,11 @@
 {{html}}
 &lt;form class="xform"&gt;
   &lt;div&gt;&lt;input type="text" name="query" placeholder="Search..." value="$!request.query"/&gt;&lt;/div&gt;
-  &lt;div&gt;&lt;input type="text" name="user" placeholder="User..." /&gt;&lt;/div&gt;
+  &lt;div&gt;&lt;input type="text" name="user" placeholder="User..." value="$!request.user"/&gt;&lt;/div&gt;
   &lt;div&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="search" value="Search" class="button"/&gt;&lt;/span&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="showas" value="Show Activity Stream" class="button"/&gt;&lt;/span&gt;
-    #if ("$!request.query" != '')
+    #if ("$!request.query" != '' || "$!request.user" != '')
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="delete" value="Delete" class="button"/&gt;&lt;/span&gt;
     #end
     #if ("$!request.delete" != '')
@@ -57,7 +57,7 @@
 &lt;/form&gt;
 {{/html}}
 
-#if ("$!request.query" == '' || "$!request.showas" != '')
+#if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
   #set ($events = $xwiki.activitystream.getEvents(false, 50, 0))
   #foreach ($event in $events)
