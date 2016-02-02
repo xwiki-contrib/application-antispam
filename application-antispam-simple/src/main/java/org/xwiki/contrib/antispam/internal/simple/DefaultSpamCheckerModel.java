@@ -19,7 +19,9 @@
  */
 package org.xwiki.contrib.antispam.internal.simple;
 
+import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,6 +30,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.antispam.AntiSpamException;
@@ -109,8 +112,8 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             if (keywordsDocument.isNew()) {
                 keywordsDocument = getDocument(KEYWORDS_DOCUMENT_REFERENCE, xcontext);
             }
-            // Parse the Keywords from the content
-            keywords = IOUtils.readLines(new StringReader(keywordsDocument.getContent()));
+            // Parse the Keywords from the content, ignoring comments
+            keywords = parseContentByLine(keywordsDocument.getContent());
         } catch (Exception e) {
             throw new AntiSpamException(String.format("Failed to get document containing spam keywords [%s]",
                 KEYWORDS_DOCUMENT_REFERENCE.toString()), e);
@@ -125,9 +128,9 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument addressDocument = getDocument(ADDRESSES_DOCUMENT_REFERENCE, xcontext);
             // Only log the IP if it's not already in the list
-            List<String> loggedIPs = IOUtils.readLines(new StringReader(addressDocument.getContent()));
+            List<String> loggedIPs = parseContentByLine(addressDocument.getContent());
             if (!loggedIPs.contains(ip)) {
-                addressDocument.setContent(ip + "\n" + addressDocument.getContent());
+                addressDocument.setContent(addressDocument.getContent() + "\n" + ip);
                 getXWiki(xcontext).saveDocument(addressDocument, "Adding new spammer ip", true, xcontext);
             }
         } catch (Exception e) {
@@ -159,10 +162,10 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument disabledUsersDocument = getDocument(DISABLED_USERS_DOCUMENT_REFERENCE, xcontext);
             // Only log the user if he's not already in the list
-            List<String> disabledUsers = IOUtils.readLines(new StringReader(disabledUsersDocument.getContent()));
+            List<String> disabledUsers = parseContentByLine(disabledUsersDocument.getContent());
             String authorReferenceAsString = this.entityReferenceSerializer.serialize(authorReference);
             if (!disabledUsers.contains(authorReferenceAsString)) {
-                disabledUsersDocument.setContent(authorReferenceAsString + "\n" + disabledUsersDocument.getContent());
+                disabledUsersDocument.setContent(disabledUsersDocument.getContent() + "\n" + authorReferenceAsString);
                 getXWiki(xcontext).saveDocument(disabledUsersDocument, String.format("Adding user [%s]",
                     authorReference), true, xcontext);
             }
@@ -220,7 +223,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument excludesDocument = getDocument(EXCLUDES_DOCUMENT_REFERENCE, xcontext);
-            excludes = IOUtils.readLines(new StringReader(excludesDocument.getContent()));
+            excludes = parseContentByLine(excludesDocument.getContent());
         } catch (Exception e) {
             this.logger.error("Failed to get document containing excludes [{}]",
                 EXCLUDES_DOCUMENT_REFERENCE.toString(), e);
@@ -250,5 +253,16 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     private XWiki getXWiki(XWikiContext xcontext)
     {
         return xcontext.getWiki();
+    }
+
+    private List<String> parseContentByLine(String content) throws IOException
+    {
+        List<String> result = new ArrayList<String>();
+        for (String line : IOUtils.readLines(new StringReader(content))) {
+            if (!StringUtils.isBlank(line) && !line.startsWith("#")) {
+                result.add(line);
+            }
+        }
+        return result;
     }
 }
