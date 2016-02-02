@@ -31,8 +31,8 @@
   <parent>Main.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1454429798000</date>
-  <contentUpdateDate>1454429798000</contentUpdateDate>
+  <date>1454434744000</date>
+  <contentUpdateDate>1454434744000</contentUpdateDate>
   <version>1.1</version>
   <title>Delete Spam User and Pages</title>
   <comment/>
@@ -48,6 +48,7 @@
     &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="search" value="Search" class="button"/&gt;&lt;/span&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="showas" value="Show Activity Stream" class="button"/&gt;&lt;/span&gt;
     #if ("$!request.query" != '' || "$!request.user" != '')
+      &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="check" value="Check for Spam" class="button"/&gt;&lt;/span&gt;
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="delete" value="Delete" class="button"/&gt;&lt;/span&gt;
     #end
     #if ("$!request.delete" != '')
@@ -67,6 +68,19 @@
 * [[Disabled Spam Users&gt;&gt;DisabledUsers]]
 {{/box}}
 
+#macro(displayReference $reference)
+  #if ("$!request.check" != '')
+    #set ($refDoc = $xwiki.getDocument($reference))
+    #set ($isSpam = $services.antispam.isSpam('simple', "${refDoc.title}\n${refDoc.content}", {}))
+    #if ($isSpam)
+      * (% style='color:green' %){{{$reference}}}
+    #else
+      * (% style='color:red' %){{{$reference}}} {{error}}Not spam content! You may need to add keywords!{{/error}}
+    #end
+  #else
+    * {{{$reference}}}
+  #end
+#end
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
   #set ($events = $xwiki.activitystream.getEvents(false, 50, 0))
@@ -84,7 +98,7 @@
   #set ($matchingDocumentReferences = $result.getLeft())
   #set ($matchingAuthorReferences = $result.getRight())
   #foreach ($matchingDocumentReference in $matchingDocumentReferences)
-    * {{{$matchingDocumentReference}}}
+    #displayReference($matchingDocumentReference)
     #if ("$!request.confirmDelete" != '')
       #set ($discard = $services.antispam.cleanDocument($matchingDocumentReference, $matchingAuthorReferences, true))
       ** Cleaned!
@@ -110,7 +124,7 @@
     #foreach ($documentReference in $documentReferences)
       ## Only handle pages that were not matching above as those have already been taken care of!
       #if (!$cleanedReferences.contains($documentReference))
-        * {{{$documentReference}}}
+        #displayReference($documentReference)
         #if ("$!request.confirmDelete" != '')
           #set ($discard = $services.antispam.cleanDocument($documentReference, $matchingAuthorReferences, true))
           ** Cleaned!
@@ -131,13 +145,13 @@
   #end
 #end
 #if ("$!request.user" != '')
-  == Page modified by user: [$request.user] ==
+  == Pages modified by user: [$request.user] ==
   #set ($userReference = $services.model.resolveDocument($request.user, 'user'))
   #set ($documentReferences = $services.antispam.getDocumentsForAuthor($userReference, 500, 0))
   #foreach ($documentReference in $documentReferences)
     ## Only handle pages that were not matching above as those have already been taken care of!
     #if (!$cleanedReferences.contains($documentReference))
-      * {{{$documentReference}}}
+      #displayReference($documentReference)
       #if ("$!request.confirmDelete" != '')
         #set ($discard = $services.antispam.cleanDocument($documentReference, [$userReference], true))
         ** Cleaned!
