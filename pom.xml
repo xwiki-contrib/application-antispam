@@ -44,7 +44,7 @@
   <scm>
     <connection>scm:git:git://github.com/xwiki-contrib/application-antispam.git</connection>
     <developerConnection>scm:git:git@github.com:xwiki-contrib/application-antispam.git</developerConnection>
-    <url>https://github.com/xwiki-contrib/application-antispam</url>
+    <url>https://github.com/xwiki-contrib/application-antispam/tree/master</url>
     <tag>HEAD</tag>
   </scm>
   <modules>
