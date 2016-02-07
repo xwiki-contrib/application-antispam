@@ -103,7 +103,8 @@ public class DefaultSpamCleaner implements SpamCleaner
         try {
             waitForSolrIndexing();
 
-            Query query = this.queryManager.createQuery(solrQueryString, SolrQueryExecutor.SOLR);
+            Query query = this.queryManager.createQuery(solrQueryString + " AND -id:xwiki\\:AntiSpam.*_*",
+                SolrQueryExecutor.SOLR);
             query.setLimit(nb);
             query.setOffset(offset);
             query.bindValue("fq", "type:DOCUMENT");
@@ -130,7 +131,7 @@ public class DefaultSpamCleaner implements SpamCleaner
         try {
             waitForSolrIndexing();
 
-            Query query = this.queryManager.createQuery("*:*", SolrQueryExecutor.SOLR);
+            Query query = this.queryManager.createQuery("*:* AND -id:xwiki\\:AntiSpam.*_*", SolrQueryExecutor.SOLR);
             query.setLimit(nb);
             query.setOffset(offset);
             String authorAsString = this.entityReferenceSerializer.serialize(authorReference);

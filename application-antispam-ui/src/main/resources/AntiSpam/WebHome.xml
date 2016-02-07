@@ -96,7 +96,7 @@
   ## Note: we make sure to surround the query string by quotes to avoid users deleting unwanted pages
   ## (since searching for example for "mcafee phone" without the quotes will search for documents 
   ## containing "mcafee" OR "phone").
-  #set ($result = $services.antispam.getMatchingDocuments("""$request.query"" AND -id:xwiki\:AntiSpam.*_*", 500, 0))
+  #set ($result = $services.antispam.getMatchingDocuments("""$request.query""", 500, 0))
   #set ($matchingDocumentReferences = $result.getLeft())
   #set ($matchingAuthorReferences = $result.getRight())
   #foreach ($matchingDocumentReference in $matchingDocumentReferences)
@@ -109,14 +109,19 @@
   #end
   == Authors ==
   #foreach ($matchingAuthorReference in $matchingAuthorReferences)
-    * {{{$matchingAuthorReference}}}
-    #if ("$!request.confirmDelete" != '')
-      #set ($userDoc = $xwiki.getDocument($matchingAuthorReference))
-      #if (!$userDoc.isNew())
-        #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
-        ** Deleted!
-      #else
-        ** Page already deleted!
+    #if ($services.security.authorization.hasAccess('ADMIN', $matchingAuthorReference, $doc.documentReference))
+      * {{{$matchingAuthorReference}}} {{error}}Excluding for safety since it has Admin access to this page{{/error}}
+      #set ($discard = $matchingAuthorReferences.remove($matchingAuthorReference))
+    #else
+      * {{{$matchingAuthorReference}}}
+      #if ("$!request.confirmDelete" != '')
+        #set ($userDoc = $xwiki.getDocument($matchingAuthorReference))
+        #if (!$userDoc.isNew())
+          #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
+          ** Deleted!
+        #else
+          ** Page already deleted!
+        #end
       #end
     #end
   #end
