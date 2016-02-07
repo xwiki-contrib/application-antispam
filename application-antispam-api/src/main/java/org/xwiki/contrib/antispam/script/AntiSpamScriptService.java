@@ -41,6 +41,8 @@ import org.xwiki.script.service.ScriptService;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
 import org.xwiki.security.authorization.Right;
 
+import com.xpn.xwiki.api.Document;
+
 @Component
 @Named("antispam")
 public class AntiSpamScriptService implements ScriptService
@@ -80,6 +82,17 @@ public class AntiSpamScriptService implements ScriptService
     public boolean isSpam(String checkerHint, String content, Map<String, Object> parameters) throws AntiSpamException
     {
         return getSpamChecker(checkerHint).isSpam(new StringReader(content), parameters);
+    }
+
+    public boolean isSpam(String checkerHint, Document document, Map<String, Object> parameters)
+        throws AntiSpamException
+    {
+        try {
+            return isSpam(checkerHint, document.getXMLContent(), parameters);
+        } catch (Exception e) {
+            throw new AntiSpamException(String.format("Error getting XML content for [%s]",
+                document.getDocumentReference()), e);
+        }
     }
 
     private SpamChecker getSpamChecker(String hint) throws AntiSpamException

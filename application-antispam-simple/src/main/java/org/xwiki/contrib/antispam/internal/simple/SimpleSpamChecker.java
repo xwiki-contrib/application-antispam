@@ -55,7 +55,7 @@ public class SimpleSpamChecker implements SpamChecker
             }
         }
 
-        // Step 2: Check for known spam keywords in the content
+        // Step 2: Check for known spam keywords in the passed content (which should include page name and page title)
         try {
             String contentAsString = IOUtils.toString(content);
             List<String> keywords = this.model.getSpamKeywords();

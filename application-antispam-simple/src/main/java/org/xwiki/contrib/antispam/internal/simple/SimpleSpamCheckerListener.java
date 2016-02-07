@@ -38,7 +38,6 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.container.Container;
 import org.xwiki.container.Request;
 import org.xwiki.container.servlet.ServletRequest;
-import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
@@ -122,22 +121,13 @@ public class SimpleSpamCheckerListener implements EventListener
         }
 
         try {
-            // TODO: Also check xobjects. Use case #1: spam in comments
-
-            // Add the title for checking for spam by adding to the content to be checked
-            String contentToCheck = document.getTitle() + "\n" + document.getContent();
-
-            boolean isSpam = this.checker.isSpam(new StringReader(contentToCheck), parameters);
+            // Note: we serialize the document to XML to have its full content including xobjects, xclass definition,
+            // title, name, etc.
+            boolean isSpam = this.checker.isSpam(new StringReader(document.getXMLContent(xcontext)), parameters);
             if (isSpam) {
                 // Mark that we're handling some spam so that when we save documents in the process they're not
                 // processed as spam which could lead to infinite recursions.
                 xcontext.put(XCONTEXT_MARKER_KEY, true);
-
-                // Cancel the event
-                if (event instanceof CancelableEvent) {
-                    ((CancelableEvent) event).cancel(String.format("The content of [%s] is considered to be spam",
-                        document.getDocumentReference()));
-                }
 
                 // Disable the user
                 DocumentReference currentUserReference = xcontext.getUserReference();
@@ -150,8 +140,20 @@ public class SimpleSpamCheckerListener implements EventListener
                 if (ip != null) {
                     this.model.logSpamAddress(ip);
                 }
+
+                // Cancel the event
+                String message = String.format("The content of [%s] is considered to be spam",
+                    document.getDocumentReference());
+                if (event instanceof CancelableEvent) {
+                    ((CancelableEvent) event).cancel(message);
+                } else {
+                    // We're on a version of XWiki that doesn't support cancelling Document savinge events. Thus we
+                    // throw an Error (and not an Exception since that one would be caught by the Observation Manager)
+                    // to stop the save!
+                    throw new Error(message);
+                }
             }
-        } catch (AntiSpamException e) {
+        } catch (Exception e) {
             // We failed to check if the content is spam or not, let is go through but log an error
             logger.error("Failed to check for spam in content of [{}]", document.getDocumentReference(), e);
         }

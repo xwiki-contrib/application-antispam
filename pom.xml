@@ -47,17 +47,25 @@
     <url>https://github.com/xwiki-contrib/application-antispam/tree/master</url>
     <tag>HEAD</tag>
   </scm>
-  <modules>
-    <module>application-antispam-api</module>
-    <module>application-antispam-simple</module>
-    <module>application-antispam-ui</module>
-  </modules>
   <developers>
     <developer>
       <id>vmassol</id>
       <name>Vincent Massol</name>
     </developer>
   </developers>
+  <modules>
+    <module>application-antispam-api</module>
+    <module>application-antispam-simple</module>
+    <module>application-antispam-ui</module>
+  </modules>
+  <profiles>
+    <profile>
+      <id>integration-tests</id>
+      <modules>
+        <module>application-antispam-test</module>
+      </modules>
+    </profile>
+  </profiles>
   <distributionManagement>
     <repository>
       <id>xwiki-staging</id>
