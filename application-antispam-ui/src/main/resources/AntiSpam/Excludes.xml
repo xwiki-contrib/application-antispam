@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.2" reference="AntiSpam.Excludes" locale="">
+<xwikidoc version="1.1">
   <web>AntiSpam</web>
   <name>Excludes</name>
   <language/>
@@ -28,11 +28,11 @@
   <translation>0</translation>
   <creator>xwiki:XWiki.Admin</creator>
   <creationDate>1454342084000</creationDate>
+  <parent>AntiSpam.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <parent>AntiSpam.WebHome</parent>
-  <date>1454426777000</date>
-  <contentUpdateDate>1454426761000</contentUpdateDate>
+  <date>1454873607000</date>
+  <contentUpdateDate>1454873607000</contentUpdateDate>
   <version>1.1</version>
   <title/>
   <comment/>

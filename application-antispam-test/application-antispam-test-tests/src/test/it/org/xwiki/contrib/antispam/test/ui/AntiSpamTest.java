@@ -49,20 +49,6 @@ public class AntiSpamTest extends AbstractTest
     @Test
     public void verifyAntiSpam() throws Exception
     {
-        // Verify that normal users can't access the AntiSpam app.
-        // TODO: This is commented out because currently the packager plugin doesn't include the XWikiAdminGroup page
-        //       which is required to be there before the AntiSpam application is installed for the default rights to
-        //       take effect.
-        //       Uncomment once a solution is found!
-        /*
-        ApplicationsPanel applicationPanel = ApplicationsPanel.gotoPage();
-        assertFalse("Applications Panel shouldn't show the AntiSpam entry for non admin users",
-            applicationPanel.containsApplication("AntiSpam"));
-        // Verify that if we try to navigate we're redirected to the login action
-        ViewPage vp = getUtil().gotoPage("AntiSpam", "WebHome");
-        assertTrue("Should have been redirected to login", vp.getPageURL().contains("/login/"));
-        */
-
         // Step 1: We verify the spam checking feature
 
         // Make sure that spam checking is active
@@ -112,6 +98,14 @@ public class AntiSpamTest extends AbstractTest
         // Create a spam user and log in
         getUtil().deletePage("XWiki", "spamuser");
         getUtil().createUserAndLogin("spamuser", "password");
+
+        // Verify that normal users can't access the AntiSpam app.
+        applicationPanel = ApplicationsPanel.gotoPage();
+        assertFalse("Applications Panel shouldn't show the AntiSpam entry for non admin users",
+            applicationPanel.containsApplication("AntiSpam"));
+        // Verify that if we try to navigate we're redirected to the login action
+        getUtil().gotoPage("AntiSpam", "WebHome");
+        assertEquals("You are not allowed to view this document or perform this action.", getErrorMessage());
 
         // Create a page with some spam in its content (we put the spam content in a multiline to verify multine
         // checking works)
@@ -229,5 +223,11 @@ public class AntiSpamTest extends AbstractTest
     {
         return getUtil().findElementWithoutWaiting(getDriver(),
             By.xpath("//div[@id = 'mainContentArea']/pre[contains(@class, 'xwikierror')]")).getText();
+    }
+
+    public String getErrorMessage()
+    {
+        return getUtil().findElementWithoutWaiting(getDriver(),
+            By.xpath("//div[@id = 'mainContentArea']//div[contains(@class, 'panel-body')]/p")).getText();
     }
 }

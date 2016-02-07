@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.2" reference="AntiSpam.WebHome" locale="">
+<xwikidoc version="1.1">
   <web>AntiSpam</web>
   <name>WebHome</name>
   <language/>
@@ -31,8 +31,8 @@
   <parent>Main.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1454434744000</date>
-  <contentUpdateDate>1454434744000</contentUpdateDate>
+  <date>1454873607000</date>
+  <contentUpdateDate>1454873607000</contentUpdateDate>
   <version>1.1</version>
   <title>Delete Spam User and Pages</title>
   <comment/>

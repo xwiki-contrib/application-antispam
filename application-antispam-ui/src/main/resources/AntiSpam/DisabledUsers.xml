@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.2" reference="AntiSpam.DisabledUsers" locale="">
+<xwikidoc version="1.1">
   <web>AntiSpam</web>
   <name>DisabledUsers</name>
   <language/>
@@ -28,11 +28,11 @@
   <translation>0</translation>
   <creator>xwiki:XWiki.Admin</creator>
   <creationDate>1454263605000</creationDate>
+  <parent>AntiSpam.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <parent>AntiSpam.WebHome</parent>
-  <date>1454429926000</date>
-  <contentUpdateDate>1454429910000</contentUpdateDate>
+  <date>1454873607000</date>
+  <contentUpdateDate>1454873607000</contentUpdateDate>
   <version>1.1</version>
   <title>Disabled Spam Users</title>
   <comment/>
