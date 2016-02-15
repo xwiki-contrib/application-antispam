@@ -7,6 +7,7 @@ Various tools to help fight spam.
 * Issue Tracker: http://jira.xwiki.org/browse/ANTISPAM
 * License: LGPL 2.1
 * Development Practices: http://dev.xwiki.org
+* Minimal XWiki version supported: XWiki 6.4
 
 ## Others
 * Translations: N/A
