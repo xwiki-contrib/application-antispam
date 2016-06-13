@@ -39,7 +39,7 @@
     <platform.version>${commons.version}</platform.version>
     <rendering.version>${commons.version}</rendering.version>
     <!-- This extension needs to be installed in the main wiki -->
-    <xwiki.extension.namespaces>xwiki</xwiki.extension.namespaces>
+    <xwiki.extension.namespaces>wiki:xwiki</xwiki.extension.namespaces>
   </properties>
   <scm>
     <connection>scm:git:git://github.com/xwiki-contrib/application-antispam.git</connection>
