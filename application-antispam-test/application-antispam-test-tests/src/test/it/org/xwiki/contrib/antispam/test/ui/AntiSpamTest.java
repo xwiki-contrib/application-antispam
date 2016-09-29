@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 public class AntiSpamTest extends AbstractTest
 {
     @Rule
-    public SuperAdminAuthenticationRule authenticationRule = new SuperAdminAuthenticationRule(getUtil(), getDriver());
+    public SuperAdminAuthenticationRule authenticationRule = new SuperAdminAuthenticationRule(getUtil());
 
     @Test
     public void verifyAntiSpam() throws Exception
@@ -105,35 +105,38 @@ public class AntiSpamTest extends AbstractTest
             applicationPanel.containsApplication("AntiSpam"));
         // Verify that if we try to navigate we're redirected to the login action
         getUtil().gotoPage("AntiSpam", "WebHome");
-        assertEquals("You are not allowed to view this document or perform this action.", getErrorMessage());
+        assertEquals("You are not allowed to view this page or perform this action.", getErrorMessage());
 
         // Create a page with some spam in its content (we put the spam content in a multiline to verify multine
         // checking works)
         getUtil().deletePage(getTestClassName(), "spam-in-content");
         getUtil().createPage(getTestClassName(), "spam-in-content", "line1\ngreat hotline\nline2", "not spam");
-        assertTrue(getErrorContent().contains(
-            "Caused by: java.lang.Error: The content of [xwiki:AntiSpamTest.spam-in-content] is considered to be "
-                + "spam"));
+        assertTrue(getErrorContent().contains("An Event Listener has cancelled the document save for "
+            + "[xwiki:AntiSpamTest.spam-in-content]. Reason: [The content of [xwiki:AntiSpamTest.spam-in-content] "
+            + "is considered to be spam]"));
 
         // Create a page with some spam in its title
         getUtil().deletePage(getTestClassName(), "spam-in-title");
         getUtil().createPage(getTestClassName(), "spam-in-title", "not spam", "call hotline now!");
-        assertTrue(getErrorContent().contains(
-            "Caused by: java.lang.Error: The content of [xwiki:AntiSpamTest.spam-in-title] is considered to be spam"));
+        assertTrue(getErrorContent().contains("An Event Listener has cancelled the document save for "
+            + "[xwiki:AntiSpamTest.spam-in-title]. Reason: [The content of [xwiki:AntiSpamTest.spam-in-title] "
+            + "is considered to be spam]"));
 
         // Create a page with some spam in the page name
         getUtil().deletePage(getTestClassName(), "spam-hotline");
         getUtil().createPage(getTestClassName(), "spam-hotline", "not spam", "not spam");
-        assertTrue(getErrorContent().contains(
-            "Caused by: java.lang.Error: The content of [xwiki:AntiSpamTest.spam-hotline] is considered to be spam"));
+        assertTrue(getErrorContent().contains("An Event Listener has cancelled the document save for "
+            + "[xwiki:AntiSpamTest.spam-hotline]. Reason: [The content of [xwiki:AntiSpamTest.spam-hotline] "
+            + "is considered to be spam]"));
 
         // Create a page with some spam in a comment xobject
         getUtil().deletePage(getTestClassName(), "spam-xobject");
         getUtil().createPage(getTestClassName(), "spam-xobject", "not spam", "not spam");
         getUtil().addObject(getTestClassName(), "spam-xobject", "XWiki.XWikiComments", "comment",
             "line1\ngreat hotline\nline2");
-        assertTrue(getErrorContent().contains(
-            "Caused by: java.lang.Error: The content of [xwiki:AntiSpamTest.spam-xobject] is considered to be spam"));
+        assertTrue(getErrorContent().contains("An Event Listener has cancelled the document save for "
+            + "[xwiki:AntiSpamTest.spam-xobject]. Reason: [The content of [xwiki:AntiSpamTest.spam-xobject] "
+            + "is considered to be spam]"));
 
         // Verify that the spam user has been banned and the ip logged
         this.authenticationRule.authenticate();
@@ -221,13 +224,13 @@ public class AntiSpamTest extends AbstractTest
      */
     public String getErrorContent()
     {
-        return getUtil().findElementWithoutWaiting(getDriver(),
+        return getDriver().findElementWithoutWaiting(
             By.xpath("//div[@id = 'mainContentArea']/pre[contains(@class, 'xwikierror')]")).getText();
     }
 
     public String getErrorMessage()
     {
-        return getUtil().findElementWithoutWaiting(getDriver(),
+        return getDriver().findElementWithoutWaiting(
             By.xpath("//div[@id = 'mainContentArea']//div[contains(@class, 'panel-body')]/p")).getText();
     }
 }

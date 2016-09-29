@@ -119,8 +119,8 @@ public class AntiSpamHomePage extends ViewPage
     private String getText(String xpath)
     {
         By by = By.xpath(xpath);
-        if (getUtil().hasElementWithoutWaiting(by)) {
-            return getUtil().findElementWithoutWaiting(getDriver(), by).getText();
+        if (getDriver().hasElementWithoutWaiting(by)) {
+            return getDriver().findElementWithoutWaiting(by).getText();
         } else {
             return null;
         }
