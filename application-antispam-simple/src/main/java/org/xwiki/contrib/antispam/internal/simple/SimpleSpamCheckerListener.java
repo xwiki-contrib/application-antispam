@@ -123,7 +123,8 @@ public class SimpleSpamCheckerListener implements EventListener
         try {
             // Note: we serialize the document to XML to have its full content including xobjects, xclass definition,
             // title, name, etc.
-            boolean isSpam = this.checker.isSpam(new StringReader(document.getXMLContent(xcontext)), parameters);
+            boolean isSpam =
+                this.checker.isSpam(new StringReader(document.toXML(true, false, false, false, xcontext)), parameters);
             if (isSpam) {
                 // Mark that we're handling some spam so that when we save documents in the process they're not
                 // processed as spam which could lead to infinite recursions.
