@@ -11,4 +11,4 @@ Various tools to help fight spam.
 * License: LGPL 2.1
 * Translations: N/A
 * Sonar Dashboard: N/A
-* Continuous Integration Status: [![Build Status](http://ci.xwiki.org/buildStatus/icon?job=Contrib%20-%20AntiSpam%20Tools%20Application)](http://ci.xwiki.org/job/Contrib%20-%20AntiSpam%20Tools%20Application/)
+* Continuous Integration Status: [![Build Status](http://ci.xwiki.org/buildStatus/icon?job=XWiki Contrib/application-antispam/master)](http://ci.xwiki.org/view/Contrib/job/XWiki%20Contrib/job/application-antispam/job/master/)
