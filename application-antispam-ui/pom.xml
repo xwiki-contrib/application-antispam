@@ -115,6 +115,30 @@
         <groupId>org.xwiki.commons</groupId>
         <artifactId>xwiki-commons-tool-xar-plugin</artifactId>
         <version>${commons.version}</version>
+        <configuration>
+          <entries>
+            <entry>
+              <document>AntiSpam.Keywords</document>
+              <type>demo</type>
+            </entry>
+            <entry>
+              <document>AntiSpam.Excludes</document>
+              <type>demo</type>
+            </entry>
+            <entry>
+              <document>AntiSpam.IPAddresses</document>
+              <type>demo</type>
+            </entry>
+            <entry>
+              <document>AntiSpam.DisabledUsers</document>
+              <type>demo</type>
+            </entry>
+            <entry>
+              <document>AntiSpam.AntiSpamConfig</document>
+              <type>configuration</type>
+            </entry>
+          </entries>
+        </configuration>
       </plugin>
     </plugins>
   </build>
