@@ -78,7 +78,9 @@ public class SimpleSpamChecker implements SpamChecker
                 if (!matchedKeywords.isEmpty()) {
                     DocumentReference authorReference = (DocumentReference) parameters.get(AUTHOR_PARAMETER);
                     DocumentReference documentReference = (DocumentReference) parameters.get(DOCUMENT_PARAMETER);
-                    this.model.logMatchingSpamKeywords(matchedKeywords, authorReference, documentReference);
+                    if (authorReference != null && documentReference != null) {
+                        this.model.logMatchingSpamKeywords(matchedKeywords, authorReference, documentReference);
+                    }
                     return true;
                 }
             }
