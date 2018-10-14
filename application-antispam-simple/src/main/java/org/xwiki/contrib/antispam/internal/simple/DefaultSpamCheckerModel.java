@@ -56,6 +56,9 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     private static final DocumentReference KEYWORDS_DOCUMENT_REFERENCE =
         new DocumentReference("xwiki", "AntiSpam", "Keywords");
 
+    private static final DocumentReference LOGS_DOCUMENT_REFERENCE =
+        new DocumentReference("xwiki", "AntiSpam", "Logs");
+
     private static final SpaceReference KEYWORDS_SPACE_REFERENCE =
         new SpaceReference("AntiSpam", new WikiReference("xwiki"));
 
@@ -230,6 +233,25 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             excludes = Collections.emptyList();
         }
         return excludes;
+    }
+
+    @Override
+    public void logMatchingSpamKeywords(List<String> matchedKeywords, DocumentReference authorReference,
+        DocumentReference documentReference) throws AntiSpamException
+    {
+        String matchedKeywordsString = StringUtils.join(matchedKeywords, ",");
+        try {
+            XWikiContext xcontext = getXWikiContext();
+            XWikiDocument logDocument = getDocument(LOGS_DOCUMENT_REFERENCE, xcontext);
+            String message = String.format("%s - %s - %s", authorReference, documentReference,
+                matchedKeywordsString);
+            logDocument.setContent(logDocument.getContent() + "\n" + message);
+            getXWiki(xcontext).saveDocument(logDocument, "New spam log", true, xcontext);
+        } catch (Exception e) {
+            throw new AntiSpamException(String.format(
+                "Failed to log spam keywords [%s] from user [%s] for document [%s], in document [%s]",
+                matchedKeywordsString, authorReference, documentReference, LOGS_DOCUMENT_REFERENCE.toString()), e);
+        }
     }
 
     private BaseObject getConfigOject() throws Exception

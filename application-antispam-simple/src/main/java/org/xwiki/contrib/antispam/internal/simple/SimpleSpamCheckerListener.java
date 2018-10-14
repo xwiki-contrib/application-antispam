@@ -120,6 +120,11 @@ public class SimpleSpamCheckerListener implements EventListener
             parameters.put("ip", ip);
         }
 
+        // Add the document and author references to the parameters so that the spam checker can log matching keywords
+        // when spam is found.
+        parameters.put("authorReference", document.getDocumentReference());
+        parameters.put("documentReference", xcontext.getUserReference());
+
         try {
             // Note: we serialize the document to XML to have its full content including xobjects, xclass definition,
             // title, name, etc.

@@ -20,8 +20,11 @@
 package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.model.reference.DocumentReference;
 
 @Component
 @Named("simple")
@@ -39,6 +43,10 @@ import org.xwiki.contrib.antispam.SpamChecker;
 public class SimpleSpamChecker implements SpamChecker
 {
     private static final String IP_PARAMETER = "ip";
+
+    private static final String AUTHOR_PARAMETER = "authorReference";
+
+    private static final String DOCUMENT_PARAMETER = "documentReference";
 
     @Inject
     private SpamCheckerModel model;
@@ -60,8 +68,17 @@ public class SimpleSpamChecker implements SpamChecker
             String contentAsString = IOUtils.toString(content);
             List<String> keywords = this.model.getSpamKeywords();
             if (!keywords.isEmpty()) {
-                String regex = String.format("(?s)(?i)^.*?(%s).*$", StringUtils.join(keywords, '|'));
-                if (contentAsString.matches(regex)) {
+                String regex = String.format(StringUtils.join(keywords, '|'));
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(contentAsString);
+                List<String> matchedKeywords = new ArrayList<>();
+                while (matcher.find()) {
+                    matchedKeywords.add(matcher.group());
+                }
+                if (!matchedKeywords.isEmpty()) {
+                    DocumentReference authorReference = (DocumentReference) parameters.get(AUTHOR_PARAMETER);
+                    DocumentReference documentReference = (DocumentReference) parameters.get(DOCUMENT_PARAMETER);
+                    this.model.logMatchingSpamKeywords(matchedKeywords, authorReference, documentReference);
                     return true;
                 }
             }

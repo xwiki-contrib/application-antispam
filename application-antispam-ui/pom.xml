@@ -134,6 +134,10 @@
               <type>demo</type>
             </entry>
             <entry>
+              <document>AntiSpam.Logs</document>
+              <type>demo</type>
+            </entry>
+            <entry>
               <document>AntiSpam.AntiSpamConfig</document>
               <type>configuration</type>
             </entry>
