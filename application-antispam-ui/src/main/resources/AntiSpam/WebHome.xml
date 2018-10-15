@@ -66,6 +66,9 @@
 {{box cssClass="floatinginfobox" title="**Results**"}}
 * [[Banned IP Addresses&gt;&gt;IPAddresses]]
 * [[Disabled Spam Users&gt;&gt;DisabledUsers]]
+#if ($xwiki.exists('Logs'))
+  * [[Logs&gt;&gt;Logs]]
+#end
 {{/box}}
 
 #macro(displayReference $reference)
