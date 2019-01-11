@@ -49,9 +49,10 @@ public class SimpleSpamCheckerTest
     @Test
     public void isSpam() throws Exception
     {
-        String content = "test spam1 content spam2";
+        // Note: we test the ability to use regex symbols in the spam keywords.
+        String content = "test spam1 content spammer2";
         SpamCheckerModel model = this.mocker.getInstance(SpamCheckerModel.class);
-        when(model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "spam2", "spam3"));
+        when(model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "spam...2", "spam3"));
 
         Map<String, Object> parameters = new HashMap<>();
         DocumentReference authorReference = new DocumentReference("wiki", "XWiki", "Author1");
@@ -62,6 +63,6 @@ public class SimpleSpamCheckerTest
         boolean isSpam = this.mocker.getComponentUnderTest().isSpam(new StringReader(content), parameters);
         assertTrue(isSpam);
 
-        verify(model).logMatchingSpamKeywords(Arrays.asList("spam1", "spam2"), authorReference, documentReference);
+        verify(model).logMatchingSpamKeywords(Arrays.asList("spam1", "spammer2"), authorReference, documentReference);
     }
 }
