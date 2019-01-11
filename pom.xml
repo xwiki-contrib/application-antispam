@@ -39,6 +39,9 @@
     <xwiki.issueManagement.jira.id>ANTISPAM</xwiki.issueManagement.jira.id>
     <xwiki.release.jira.skip>false</xwiki.release.jira.skip>
     <xwiki.checkstyle.skip>true</xwiki.checkstyle.skip>
+    <!-- TODO: Remove once we upgrade the parent version to be 11.0RC1+ -->
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.organization>xwiki</sonar.organization>
   </properties>
   <scm>
     <connection>scm:git:git://github.com/xwiki-contrib/application-antispam.git</connection>
@@ -63,6 +66,20 @@
       <modules>
         <module>application-antispam-test</module>
       </modules>
+    </profile>
+    <!-- TODO: Remove once we upgrade the parent version to be 11.0RC1+ -->
+    <profile>
+      <id>quality</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonarsource.scanner.maven</groupId>
+            <artifactId>sonar-maven-plugin</artifactId>
+            <!-- Lock down plugin version for build reproducibility -->
+            <version>3.5.0.1254</version>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

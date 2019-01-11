@@ -25,4 +25,8 @@
 // See https://github.com/jenkinsci/workflow-cps-global-lib-plugin for details.
 
 xwikiModule {
+    xvnc = false
+    goals = 'clean deploy jacoco:report sonar:sonar'
+    profiles = 'quality'
+    sonar = true
 }
