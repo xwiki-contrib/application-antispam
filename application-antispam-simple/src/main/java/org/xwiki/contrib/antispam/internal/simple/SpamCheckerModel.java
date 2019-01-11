@@ -25,8 +25,6 @@ import org.xwiki.component.annotation.Role;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.model.reference.DocumentReference;
 
-import com.xpn.xwiki.doc.XWikiDocument;
-
 @Role
 public interface SpamCheckerModel
 {

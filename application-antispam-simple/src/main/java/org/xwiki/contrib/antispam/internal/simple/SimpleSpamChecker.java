@@ -57,10 +57,8 @@ public class SimpleSpamChecker implements SpamChecker
         // Step 1: Check for known IP addresses of spammers. Consider that all content created by a spammer ip to
         //             be spam.
         String ip = (String) parameters.get(IP_PARAMETER);
-        if (ip != null) {
-            if (this.model.getSpamAddresses().contains(ip)) {
-                return true;
-            }
+        if (ip != null && this.model.getSpamAddresses().contains(ip)) {
+            return true;
         }
 
         // Step 2: Check for known spam keywords in the passed content (which should include page name and page title)
