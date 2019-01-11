@@ -10,5 +10,5 @@ Various tools to help fight spam.
 * Minimal XWiki version supported: XWiki 8.4
 * License: LGPL 2.1
 * Translations: N/A
-* Sonar Dashboard: N/A
+* Sonar Dashboard: [![Status](https://sonarcloud.io/api/project_badges/measure?project=org.xwiki.contrib:application-antispam&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.xwiki.contrib:application-antispam)
 * Continuous Integration Status: [![Build Status](http://ci.xwiki.org/view/Contrib/job/XWiki%20Contrib/job/application-antispam/job/master/badge/icon)](http://ci.xwiki.org/view/Contrib/job/XWiki%20Contrib/job/application-antispam/job/master/)
