@@ -18,15 +18,26 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-// It's assumed that Jenkins has been configured to implicitly load the vars/xwikiModule.groovy library which exposes
-// the "xwikiModule" global function/DSL.
-// Note that the version used is the one defined in Jenkins but it can be overridden as follows:
-// @Library("XWiki@<branch, tag, sha1>") _
-// See https://github.com/jenkinsci/workflow-cps-global-lib-plugin for details.
-
-xwikiModule {
-    xvnc = false
-    goals = 'clean deploy jacoco:report sonar:sonar'
-    profiles = 'quality'
-    sonar = true
+stage ('AntiSpam Builds') {
+  parallel(
+    'main': {
+      node {
+        xwikiBuild('Main') {
+          goals = 'clean deploy'
+          profiles = 'integration-tests'
+        }
+      }
+    },
+    'quality': {
+      node {
+        xwikiBuild('Quality') {
+          xvnc = false
+          goals = 'clean install jacoco:report sonar:sonar'
+          profiles = 'quality,coverage'
+          properties = '-Dxwiki.jacoco.itDestFile=`pwd`/target/jacoco-it.exec'
+          sonar = true
+        }
+      }
+    }
+  )
 }
