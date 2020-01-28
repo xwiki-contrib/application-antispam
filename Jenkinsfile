@@ -22,9 +22,12 @@ stage ('AntiSpam Builds') {
   parallel(
     'main': {
       node {
+        // We need FF 32.0.1 since the tests are still on Selenium 2.x
+        def firefoxVersionSystemProperty = getFirefoxVersionSystemProperty()
         xwikiBuild('Main') {
           goals = 'clean deploy'
           profiles = 'integration-tests'
+          properties = firefoxVersionSystemProperty
         }
       }
     },
