@@ -18,29 +18,11 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-stage ('AntiSpam Builds') {
-  parallel(
-    'main': {
-      node {
-        // We need FF 32.0.1 since the tests are still on Selenium 2.x
-        def firefoxVersionSystemProperty = getFirefoxVersionSystemProperty()
-        xwikiBuild('Main') {
-          goals = 'clean deploy'
-          profiles = 'integration-tests'
-          properties = firefoxVersionSystemProperty
-        }
-      }
-    },
-    'quality': {
-      node {
-        xwikiBuild('Quality') {
-          xvnc = false
-          goals = 'clean install jacoco:report sonar:sonar'
-          profiles = 'quality,coverage'
-          properties = '-Dxwiki.jacoco.itDestFile=`pwd`/target/jacoco-it.exec'
-          sonar = true
-        }
-      }
+node('docker') {
+    xwikiBuild {
+        xvnc = false
+        goals = 'clean deploy jacoco:report sonar:sonar'
+        profiles = 'quality,integration-tests'
+        sonar = true
     }
-  )
 }

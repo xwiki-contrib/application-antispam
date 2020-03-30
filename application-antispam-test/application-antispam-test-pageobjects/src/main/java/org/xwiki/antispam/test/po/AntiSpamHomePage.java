@@ -60,20 +60,37 @@ public class AntiSpamHomePage extends ViewPage
 
     public ViewPage clickSpamKeywords()
     {
-        this.keywordsLink.click();
-        return new ViewPage();
+        return clickAndWait(this.keywordsLink);
     }
 
     public ViewPage clickBannedIPAddresses()
     {
-        this.bannedIPAddressesLink.click();
-        return new ViewPage();
+        return clickAndWait(this.bannedIPAddressesLink);
     }
 
     public ViewPage clickDisabledSpamUsers()
     {
-        this.disabledSpamUsersLink.click();
-        return new ViewPage();
+        return clickAndWait(this.disabledSpamUsersLink);
+    }
+
+    private ViewPage clickAndWait(WebElement element)
+    {
+        // TODO: Override the default timeout because by default it's 10seconds and we click on links that lead to pages
+        // containing the {{code}} macro which initialize jython on the first load and that init can take more than
+        // 10 seconds. Without this override, the waitUntilPageIsReloaded() would fail.
+        int timeout = getDriver().getTimeout();
+        getDriver().setTimeout(timeout * 2);
+        try {
+            // TODO: Seems that sel3's click() doesn't wait anymore.
+            // This seems related to https://github.com/mozilla/geckodriver/issues/1026 but here we're not clicking
+            // the submit of a form.
+            getDriver().addPageNotYetReloadedMarker();
+            element.click();
+            getDriver().waitUntilPageIsReloaded();
+            return new ViewPage();
+        } finally {
+            getDriver().setTimeout(timeout);
+        }
     }
 
     public AntiSpamHomePage searchSpam(String keyword)
@@ -113,7 +130,7 @@ public class AntiSpamHomePage extends ViewPage
 
     public String getMatchedActivityStreamText()
     {
-        return getText("//h2[@id = 'HActivityStreamEvents']/following-sibling::ul");
+        return getText("//h2[@id = 'HEvents']/following-sibling::ul");
     }
 
     private String getText(String xpath)

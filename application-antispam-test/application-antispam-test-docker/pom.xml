@@ -27,38 +27,25 @@
     <artifactId>application-antispam-test</artifactId>
     <version>1.7-SNAPSHOT</version>
   </parent>
-  <artifactId>application-antispam-test-tests</artifactId>
-  <name>AntiSpam Functional Tests - Tests</name>
+  <artifactId>application-antispam-test-docker</artifactId>
+  <name>AntiSpam Functional Tests - Docker</name>
   <!-- TODO: Move to use "functional-test" in the future when http://jira.codehaus.org/browse/MNG-1911 is fixed,
-       see http://jira.xwiki.org/jira/browse/XWIKI-7683 -->
+       see https://jira.xwiki.org/browse/XWIKI-7683 -->
   <packaging>jar</packaging>
-  <description>AntiSpam Functional Tests - Tests</description>
+  <description>AntiSpam Functional Tests - Docker</description>
   <properties>
-    <xwikiCfgSuperadminPassword>pass</xwikiCfgSuperadminPassword>
-    <!-- Override in order to add:
-         - the Rights Manager Plugin (required by the Access Rights editor and the Users and
-           Groups administration sections)
-    -->
-    <xwikiCfgPlugins>\
-      com.xpn.xwiki.plugin.skinx.JsSkinExtensionPlugin,\
-      com.xpn.xwiki.plugin.skinx.JsSkinFileExtensionPlugin,\
-      com.xpn.xwiki.plugin.skinx.CssSkinExtensionPlugin,\
-      com.xpn.xwiki.plugin.skinx.CssSkinFileExtensionPlugin,\
-      com.xpn.xwiki.plugin.skinx.LinkExtensionPlugin,\
-      com.xpn.xwiki.plugin.rightsmanager.RightsManagerPlugin
-    </xwikiCfgPlugins>
     <!-- Functional tests are allowed to output content to the console -->
     <xwiki.surefire.captureconsole.skip>true</xwiki.surefire.captureconsole.skip>
-    <!-- Antispam home page requires PR to display the Event Stream so we need to exclude it from the PR checker ATM -->
-    <xwikiPropertiesAdditionalProperties>test.prchecker.excludePattern=.*:AntiSpam\.WebHome</xwikiPropertiesAdditionalProperties>
   </properties>
   <dependencies>
+    <!-- ================================
+         Dependencies for tested features
+         ================================ -->
     <dependency>
       <groupId>org.xwiki.contrib</groupId>
       <artifactId>application-antispam-ui</artifactId>
       <version>${project.version}</version>
       <type>xar</type>
-      <scope>runtime</scope>
       <exclusions>
         <!-- Exclude platform jars so that we get the recent dependencies -->
         <exclusion>
@@ -169,17 +156,19 @@
       <type>xar</type>
       <scope>runtime</scope>
     </dependency>
-    <!-- Test dependencies -->
+    <!-- ================================
+         Test only dependencies
+         ================================ -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-test-docker</artifactId>
+      <version>${platform.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.xwiki.contrib</groupId>
       <artifactId>application-antispam-test-pageobjects</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-test-ui</artifactId>
-      <version>${platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -192,26 +181,14 @@
   <build>
     <testSourceDirectory>src/test/it</testSourceDirectory>
     <plugins>
-      <!-- TODO: Remove when the http://jira.codehaus.org/browse/MNG-1911 is fixed, see also
-           http://jira.xwiki.org/jira/browse/XWIKI-7683 -->
       <plugin>
-        <groupId>org.xwiki.platform</groupId>
-        <artifactId>xwiki-platform-tool-packager-plugin</artifactId>
-        <version>${platform.version}</version>
-        <dependencies>
-          <!-- TODO: remove the need for this dependency in the future. The reason we need it right now is because
-               the Packager Mojo will use the Import Mojo to import XARs but since we've defined the
-               xwikiDbHbmCommonExtraMappings property up there, it's using it and thus we need the mapping file to be
-               in the classpath. -->
-        </dependencies>
-        <executions>
-          <execution>
-            <phase>generate-test-resources</phase>
-            <goals>
-              <goal>package</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>**/AntiSpamIT.java</include>
+          </includes>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -222,25 +199,25 @@
            It's needed because instrumented jars in the WAR will call Clover APIs at runtime when they execute. -->
       <dependencies>
         <dependency>
-          <groupId>com.atlassian.clover</groupId>
+          <groupId>org.openclover</groupId>
           <artifactId>clover</artifactId>
         </dependency>
       </dependencies>
       <build>
         <plugins>
-          <!-- Add the Clover JAR to the Packager plugin runtime classpath since the Packager plugin uses java classes
-               that have been instrumented with Clover (XWiki oldcore for example) -->
           <plugin>
-            <groupId>org.xwiki.platform</groupId>
-            <artifactId>xwiki-platform-tool-packager-plugin</artifactId>
-            <version>${platform.version}</version>
-            <dependencies>
-              <dependency>
-                <groupId>com.atlassian.clover</groupId>
-                <artifactId>clover</artifactId>
-                <version>${clover.version}</version>
-              </dependency>
-            </dependencies>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <systemProperties combine.children="append">
+                <!-- Tell the Docker-based test to activate the Clover profile so that the Clover JAR is added to
+                     WEB-INF/lib -->
+                <property>
+                  <name>xwiki.test.ui.profiles</name>
+                  <value>clover</value>
+                </property>
+              </systemProperties>
+            </configuration>
           </plugin>
         </plugins>
       </build>

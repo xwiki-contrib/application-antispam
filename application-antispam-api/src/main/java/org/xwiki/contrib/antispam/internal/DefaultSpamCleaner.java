@@ -68,7 +68,7 @@ import com.xpn.xwiki.doc.rcs.XWikiRCSNodeInfo;
 public class DefaultSpamCleaner implements SpamCleaner
 {
     @Inject
-    Logger logger;
+    private Logger logger;
 
     @Inject
     private QueryManager queryManager;
