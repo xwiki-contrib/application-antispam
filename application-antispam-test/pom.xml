@@ -50,6 +50,9 @@
     <module>application-antispam-test-pageobjects</module>
     <module>application-antispam-test-tests</module>
   </modules>
+  <!-- TODO: Don't run the docker tests yet since they don't work because of a problem in XWiki's provisioning that
+       fails to install SOLR modules at runtime -->
+  <!--
   <profiles>
     <profile>
       <id>docker</id>
@@ -58,4 +61,5 @@
       </modules>
     </profile>
   </profiles>
+  -->
 </project>
