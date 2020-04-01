@@ -96,13 +96,20 @@ public class AntiSpamHomePage extends ViewPage
 
     public AntiSpamHomePage searchSpam(String keyword)
     {
-        this.searchInput.clear();;
-        this.searchInput.sendKeys(keyword);
-        // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
-        getDriver().addPageNotYetReloadedMarker();
-        this.searchSubmit.click();
-        getDriver().waitUntilPageIsReloaded();
-        return new AntiSpamHomePage();
+        // TODO: Remove, added just to try to understand why the waitUntilPageIsReloaded() times out on the CI.
+        int timeout = getDriver().getTimeout();
+        getDriver().setTimeout(timeout * 3);
+        try {
+            this.searchInput.clear();;
+            this.searchInput.sendKeys(keyword);
+            // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
+            getDriver().addPageNotYetReloadedMarker();
+            this.searchSubmit.click();
+            getDriver().waitUntilPageIsReloaded();
+            return new AntiSpamHomePage();
+        } finally {
+            getDriver().setTimeout(timeout);
+        }
     }
 
     public AntiSpamHomePage deleteSpam()
