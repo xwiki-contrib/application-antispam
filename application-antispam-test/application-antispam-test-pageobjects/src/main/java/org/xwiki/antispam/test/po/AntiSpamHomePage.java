@@ -104,7 +104,7 @@ public class AntiSpamHomePage extends ViewPage
         getDriver().addPageNotYetReloadedMarker();
         assertTrue(this.searchSubmit.isDisplayed());
         assertTrue(this.searchSubmit.isEnabled());
-        this.searchSubmit.click();
+        this.searchSubmit.submit();
         getDriver().waitUntilPageIsReloaded();
         return new AntiSpamHomePage();
     }
