@@ -98,7 +98,10 @@ public class AntiSpamHomePage extends ViewPage
     {
         this.searchInput.clear();;
         this.searchInput.sendKeys(keyword);
+        // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
+        getDriver().addPageNotYetReloadedMarker();
         this.searchSubmit.click();
+        getDriver().waitUntilPageIsReloaded();
         return new AntiSpamHomePage();
     }
 
