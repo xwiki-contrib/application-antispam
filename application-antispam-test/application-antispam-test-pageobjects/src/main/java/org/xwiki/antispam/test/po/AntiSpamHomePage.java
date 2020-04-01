@@ -20,6 +20,7 @@
 package org.xwiki.antispam.test.po;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.slf4j.LoggerFactory;
@@ -105,7 +106,8 @@ public class AntiSpamHomePage extends ViewPage
         // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
         getDriver().addPageNotYetReloadedMarker();
         LoggerFactory.getLogger(this.getClass()).info("YYY current URL [{}]", getDriver().getCurrentUrl());
-        this.searchSubmit.click();
+        WebElement element = getDriver().findElement(By.xpath("//input[@name = 'search']"));
+        element.sendKeys(Keys.RETURN);
         try {
             Thread.sleep(5000L);
         } catch (Exception e) {
