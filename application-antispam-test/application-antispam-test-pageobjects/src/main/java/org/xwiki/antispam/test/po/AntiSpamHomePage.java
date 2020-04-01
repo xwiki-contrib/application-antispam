@@ -24,6 +24,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.xwiki.test.ui.po.ViewPage;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * Represents the Home page of the AntiSpam application.
  *
@@ -96,20 +98,15 @@ public class AntiSpamHomePage extends ViewPage
 
     public AntiSpamHomePage searchSpam(String keyword)
     {
-        // TODO: Remove, added just to try to understand why the waitUntilPageIsReloaded() times out on the CI.
-        int timeout = getDriver().getTimeout();
-        getDriver().setTimeout(timeout * 3);
-        try {
-            this.searchInput.clear();;
-            this.searchInput.sendKeys(keyword);
-            // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
-            getDriver().addPageNotYetReloadedMarker();
-            this.searchSubmit.click();
-            getDriver().waitUntilPageIsReloaded();
-            return new AntiSpamHomePage();
-        } finally {
-            getDriver().setTimeout(timeout);
-        }
+        this.searchInput.clear();;
+        this.searchInput.sendKeys(keyword);
+        // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
+        getDriver().addPageNotYetReloadedMarker();
+        assertTrue(this.searchSubmit.isDisplayed());
+        assertTrue(this.searchSubmit.isEnabled());
+        this.searchSubmit.click();
+        getDriver().waitUntilPageIsReloaded();
+        return new AntiSpamHomePage();
     }
 
     public AntiSpamHomePage deleteSpam()
