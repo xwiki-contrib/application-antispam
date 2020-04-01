@@ -26,8 +26,6 @@ import org.openqa.selenium.support.FindBy;
 import org.slf4j.LoggerFactory;
 import org.xwiki.test.ui.po.ViewPage;
 
-import static org.junit.Assert.assertTrue;
-
 /**
  * Represents the Home page of the AntiSpam application.
  *
@@ -38,7 +36,7 @@ public class AntiSpamHomePage extends ViewPage
     @FindBy(xpath = "//input[@name = 'query']")
     private WebElement searchInput;
 
-    @FindBy(xpath = "//input[@name = 'search']")
+    @FindBy(xpath = "//input[@name = 'searchSpam']")
     private WebElement searchSubmit;
 
     @FindBy(xpath = "//input[@name = 'delete']")
@@ -106,8 +104,7 @@ public class AntiSpamHomePage extends ViewPage
         // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
         getDriver().addPageNotYetReloadedMarker();
         LoggerFactory.getLogger(this.getClass()).info("YYY current URL [{}]", getDriver().getCurrentUrl());
-        WebElement element = getDriver().findElement(By.xpath("//input[@name = 'search']"));
-        element.sendKeys(Keys.RETURN);
+        this.searchInput.click();
         try {
             Thread.sleep(5000L);
         } catch (Exception e) {
