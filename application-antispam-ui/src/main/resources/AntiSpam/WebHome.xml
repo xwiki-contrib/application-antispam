@@ -92,6 +92,21 @@
     #displayException('Failed to remove spam from [${documentReference}]', $exception)
   #end
 #end
+#macro(displayEvent $event)
+  #if ($xwiki.exists($event.document))
+    #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
+    #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
+    #set ($documentText = "[[$event.document (v${event.documentVersion})>>path:$viewRevURL]] ([[diff>>path:$diffURL]])")
+  #else
+    #set ($documentText = "$event.document (v${event.documentVersion})")
+  #end
+  #if ($xwiki.exists($event.user))
+    #set ($userText = "[[$event.user>>$event.user]]")
+  #else
+    #set ($userText = "$event.user")
+  #end
+  * {{{$event.date}}} - ${userText} - ${documentText} - {{{$event.type}}}
+#end
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
   #set ($query = $services.query.xwql("order by event.date desc").setLimit(50))
@@ -99,9 +114,7 @@
   #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
   #set ($events = $eventStream.searchEvents($query))
   #foreach ($event in $events)
-    #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
-    #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
-    * {{{$event.date}}} - [[$event.user]] - [[$event.document (v${event.documentVersion})>>$viewRevURL]] ([[diff>>$diffURL]]) - {{{$event.type}}}
+    #displayEvent($event)
   #end
 #end
 ## Starting with XWiki 11.x (don't recall the exact version, $collectionstool was deprecated/removed).
@@ -166,9 +179,7 @@
     #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
     #set ($events = $eventStream.searchEvents($query))
     #foreach ($event in $events)
-      #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
-      #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
-      * {{{$event.date}}} - [[$event.user]] - [[$event.document (v${event.documentVersion})>>$viewRevURL]] ([[diff>>$diffURL]]) - {{{$event.type}}}
+      #displayEvent($event)
       #if ("$!request.confirmDelete" != '')
         #set ($discard = $eventStream.deleteEvent($event))
         ** Event deleted
