@@ -78,8 +78,9 @@ public class AntiSpamHomePage extends ViewPage
         // TODO: Override the default timeout because by default it's 10seconds and we click on links that lead to pages
         // containing the {{code}} macro which initialize jython on the first load and that init can take more than
         // 10 seconds. Without this override, the waitUntilPageIsReloaded() would fail.
+        // Note that we got a timeout with 20s, hence the * 3.
         int timeout = getDriver().getTimeout();
-        getDriver().setTimeout(timeout * 2);
+        getDriver().setTimeout(timeout * 3);
         try {
             // TODO: Seems that sel3's click() doesn't wait anymore.
             // This seems related to https://github.com/mozilla/geckodriver/issues/1026 but here we're not clicking
