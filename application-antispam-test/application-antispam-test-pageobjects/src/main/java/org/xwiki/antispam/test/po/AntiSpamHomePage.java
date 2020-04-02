@@ -79,7 +79,8 @@ public class AntiSpamHomePage extends ViewPage
         // TODO: Override the default timeout because by default it's 10seconds and we click on links that lead to pages
         // containing the {{code}} macro which initialize jython on the first load and that init can take more than
         // 10 seconds. Without this override, the waitUntilPageIsReloaded() would fail.
-        // Note that we got a timeout with 40s, hence the * 5.
+        // Note that we set a large timeout (hence the * 10) because we noticed sometimes large delays locally when
+        // testing inside docker containers (got up to 50s of delays once).
         int timeout = getDriver().getTimeout();
         getDriver().setTimeout(timeout * 10);
         try {
