@@ -20,6 +20,7 @@
 package org.xwiki.antispam.test.po;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.xwiki.test.ui.po.ViewPage;
@@ -97,7 +98,7 @@ public class AntiSpamHomePage extends ViewPage
     public AntiSpamHomePage searchSpam(String keyword)
     {
         // Make sure the element is visible. Apparently this is important to be able to click on the form.
-        getDriver().scrollTo(this.searchInput);
+        ((JavascriptExecutor) getDriver()).executeScript("window.scrollTo(document.body.scrollHeight, 0)");
         this.searchInput.clear();;
         this.searchInput.sendKeys(keyword);
         // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
