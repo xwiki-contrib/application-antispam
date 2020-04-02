@@ -81,7 +81,7 @@ public class AntiSpamHomePage extends ViewPage
         // 10 seconds. Without this override, the waitUntilPageIsReloaded() would fail.
         // Note that we got a timeout with 40s, hence the * 5.
         int timeout = getDriver().getTimeout();
-        getDriver().setTimeout(timeout * 5);
+        getDriver().setTimeout(timeout * 10);
         try {
             // TODO: Seems that sel3's click() doesn't wait anymore.
             // This seems related to https://github.com/mozilla/geckodriver/issues/1026 but here we're not clicking
@@ -98,6 +98,7 @@ public class AntiSpamHomePage extends ViewPage
     public AntiSpamHomePage searchSpam(String keyword)
     {
         // Make sure the element is visible. Apparently this is important to be able to click on the form.
+        // Note: using getDriver().scrollTo(this.searchInput) didn't work
         ((JavascriptExecutor) getDriver()).executeScript("window.scrollTo(document.body.scrollHeight, 0)");
         this.searchInput.clear();;
         this.searchInput.sendKeys(keyword);
