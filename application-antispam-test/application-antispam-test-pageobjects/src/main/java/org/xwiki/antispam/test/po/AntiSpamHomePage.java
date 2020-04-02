@@ -35,7 +35,7 @@ public class AntiSpamHomePage extends ViewPage
     @FindBy(xpath = "//input[@name = 'query']")
     private WebElement searchInput;
 
-    @FindBy(xpath = "//input[@name = 'search']")
+    @FindBy(xpath = "//input[@name = 'searchSpam']")
     private WebElement searchSubmit;
 
     @FindBy(xpath = "//input[@name = 'delete']")
