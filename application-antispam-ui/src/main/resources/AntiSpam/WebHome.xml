@@ -42,7 +42,7 @@
   &lt;div&gt;&lt;input type="text" name="query" placeholder="Search..." value="$!request.query"/&gt;&lt;/div&gt;
   &lt;div&gt;&lt;input type="text" name="user" placeholder="User..." value="$!request.user"/&gt;&lt;/div&gt;
   &lt;div&gt;
-    &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="searchSpam" value="Search" class="button"/&gt;&lt;/span&gt;
+    &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="search" value="Search" class="button"/&gt;&lt;/span&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="showas" value="Show Activity Stream" class="button"/&gt;&lt;/span&gt;
     #if ("$!request.query" != '' || "$!request.user" != '')
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="check" value="Check for Spam" class="button"/&gt;&lt;/span&gt;

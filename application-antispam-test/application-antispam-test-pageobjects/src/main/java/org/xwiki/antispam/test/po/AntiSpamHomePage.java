@@ -20,10 +20,8 @@
 package org.xwiki.antispam.test.po;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
-import org.slf4j.LoggerFactory;
 import org.xwiki.test.ui.po.ViewPage;
 
 /**
@@ -36,7 +34,7 @@ public class AntiSpamHomePage extends ViewPage
     @FindBy(xpath = "//input[@name = 'query']")
     private WebElement searchInput;
 
-    @FindBy(xpath = "//input[@name = 'searchSpam']")
+    @FindBy(xpath = "//input[@name = 'search']")
     private WebElement searchSubmit;
 
     @FindBy(xpath = "//input[@name = 'delete']")
@@ -98,19 +96,11 @@ public class AntiSpamHomePage extends ViewPage
 
     public AntiSpamHomePage searchSpam(String keyword)
     {
-        LoggerFactory.getLogger(this.getClass()).info("XXX current URL [{}]", getDriver().getCurrentUrl());
         this.searchInput.clear();;
         this.searchInput.sendKeys(keyword);
         // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
         getDriver().addPageNotYetReloadedMarker();
-        LoggerFactory.getLogger(this.getClass()).info("YYY current URL [{}]", getDriver().getCurrentUrl());
-        this.searchInput.click();
-        try {
-            Thread.sleep(5000L);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error("sleep errro", e);
-        }
-        LoggerFactory.getLogger(this.getClass()).info("ZZZ current URL [{}]", getDriver().getCurrentUrl());
+        this.searchSubmit.click();
         getDriver().waitUntilPageIsReloaded();
         return new AntiSpamHomePage();
     }
