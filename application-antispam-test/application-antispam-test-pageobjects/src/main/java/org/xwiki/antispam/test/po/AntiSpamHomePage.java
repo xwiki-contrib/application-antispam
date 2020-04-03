@@ -22,6 +22,7 @@ package org.xwiki.antispam.test.po;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindBy;
 import org.xwiki.test.ui.po.ViewPage;
 
@@ -100,7 +101,7 @@ public class AntiSpamHomePage extends ViewPage
     {
         // Make sure the element is visible. Apparently this is important to be able to click on the form.
         // Note: using getDriver().scrollTo(this.searchInput) didn't work
-        ((JavascriptExecutor) getDriver()).executeScript("window.scrollTo(document.body.scrollHeight, 0)");
+        scrollIntoView(this.searchInput);
         this.searchInput.clear();;
         this.searchInput.sendKeys(keyword);
         // TODO: Remove once https://github.com/mozilla/geckodriver/issues/1026 is fixed
@@ -150,5 +151,30 @@ public class AntiSpamHomePage extends ViewPage
         } else {
             return null;
         }
+    }
+
+    private void scrollIntoView(WebElement element)
+    {
+        if (!isVisibleInViewport(element)) {
+            Actions actions = new Actions(getDriver());
+            actions.moveToElement(element).build().perform();
+        }
+    }
+
+    private boolean isVisibleInViewport(WebElement element)
+    {
+        // See https://stackoverflow.com/questions/60562711/selenium-scroll-into-view-doesnt-work-when-element-is-already-into-view
+        return (Boolean)((JavascriptExecutor) getDriver()).executeScript(
+            "var elem = arguments[0],                 "
+                + "  box = elem.getBoundingClientRect(),    "
+                + "  cx = box.left + box.width / 2,         "
+                + "  cy = box.top + box.height / 2,         "
+                + "  e = document.elementFromPoint(cx, cy); "
+                + "for (; e; e = e.parentElement) {         "
+                + "  if (e === elem)                        "
+                + "    return true;                         "
+                + "}                                        "
+                + "return false;                            "
+            , element);
     }
 }
