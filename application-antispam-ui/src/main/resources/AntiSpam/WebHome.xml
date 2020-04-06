@@ -142,7 +142,6 @@
   #foreach ($matchingAuthorReference in $matchingAuthorReferences)
     #if ($services.security.authorization.hasAccess('ADMIN', $matchingAuthorReference, $doc.documentReference))
       * {{{$matchingAuthorReference}}} {{error}}Excluding for safety since it has Admin access to this page{{/error}}
-      #set ($discard = $matchingAuthorReferences.remove($matchingAuthorReference))
     #else
       * {{{$matchingAuthorReference}}}
       #if ("$!request.confirmDelete" != '')
@@ -154,9 +153,9 @@
           ** Page already deleted!
         #end
       #end
-      #set ($discard = $cleanedReferences.add($matchingAuthorReference))
     #end
   #end
+  #set ($discard = $cleanedReferences.addAll($matchingAuthorReference))
   == Pages created or modified by those Authors ==
   #foreach ($matchingAuthorReference in $matchingAuthorReferences)
     #set ($documentReferences = $services.antispam.getDocumentsForAuthor($matchingAuthorReference, 500, 0))
