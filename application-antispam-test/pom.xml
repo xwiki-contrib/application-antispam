@@ -29,7 +29,7 @@
   </parent>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>application-antispam-test</artifactId>
-  <version>1.7-SNAPSHOT</version>
+  <version>1.7</version>
   <name>AntiSpam Functional Tests - Parent POM</name>
   <description>AntiSpam Functional Tests - Parent POM</description>
   <packaging>pom</packaging>
@@ -62,4 +62,8 @@
     </profile>
   </profiles>
   -->
+
+  <scm>
+    <tag>application-antispam-1.7</tag>
+  </scm>
 </project>
