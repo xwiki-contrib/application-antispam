@@ -80,7 +80,7 @@ public class SimpleSpamCheckerListener implements EventListener
     @Override
     public List<Event> getEvents()
     {
-        return Arrays.<Event>asList(new DocumentUpdatingEvent(), new DocumentCreatingEvent());
+        return Arrays.asList(new DocumentUpdatingEvent(), new DocumentCreatingEvent());
     }
 
     @Override

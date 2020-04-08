@@ -29,6 +29,7 @@ import org.xwiki.administration.test.po.AdministrationPage;
 import org.xwiki.antispam.test.po.AntiSpamAdministrationSectionPage;
 import org.xwiki.antispam.test.po.AntiSpamHomePage;
 import org.xwiki.panels.test.po.ApplicationsPanel;
+import org.xwiki.rest.model.jaxb.Page;
 import org.xwiki.test.ui.AbstractTest;
 import org.xwiki.test.ui.SuperAdminAuthenticationRule;
 import org.xwiki.test.ui.po.ViewPage;
@@ -247,6 +248,13 @@ public class AntiSpamTest extends AbstractTest
         // Log in as superadmin
         this.authenticationRule.authenticate();
 
+        // Modify a document with spam to verify that we don't try to remove that modification since it comes from
+        // a user having admin rights + verify that the UI shows that the superadmin user won't be removed
+        Page page = getUtil().rest().page(getUtil().resolveDocumentReference(getTestClassName() + ".spam-in-content"));
+        // We keep the old content (with the spam that the admin user has not seen) + add new content
+        page.setContent("new content by admin user\n" + "line1\ngreat hotline\nline2");
+        getUtil().rest().save(page, 202);
+
         // Search for a spam keyword and verify the results
         home = AntiSpamHomePage.gotoPage();
         home = home.searchSpam("hotline");
@@ -256,14 +264,16 @@ public class AntiSpamTest extends AbstractTest
         assertTrue(home.getMatchedPagesText().contains("xwiki:AntiSpamTest.spam-xobject"));
         assertTrue(home.getMatchedPagesText().contains("xwiki:AntiSpamTest.spam-in-content"));
         // Verify the Matched Authors
-        assertEquals("xwiki:XWiki.spamuser", home.getMatchedAuthorsText());
+        assertEquals("xwiki:XWiki.spamuser\n"
+            + "xwiki:XWiki.superadmin Excluding for safety since it has Admin access to this page",
+            home.getMatchedAuthorsText());
         // Verify the Matched Related Pages
         assertEquals("xwiki:XWiki.spamuser\n"
-            + "xwiki:AntiSpamTest.spam-in-content\n"
             + "xwiki:AntiSpamTest.spam-in-title\n"
             + "xwiki:AntiSpamTest.spam-hotline\n"
             + "xwiki:AntiSpamTest.spam-xobject\n"
-            + "xwiki:AntiSpamTest.relatedpage", home.getMatchedRelatedPagesText());
+            + "xwiki:AntiSpamTest.relatedpage\n"
+            + "xwiki:AntiSpamTest.spam-in-content", home.getMatchedRelatedPagesText());
         // Verify the Matched Activity Stream
         List<String> asTexts = Arrays.asList(StringUtils.split(home.getMatchedActivityStreamText(), "\n "));
         assertTrue(asTexts.size() >= 7);
@@ -273,18 +283,26 @@ public class AntiSpamTest extends AbstractTest
 
         // Verify that the Spam pages have been deleted
         assertFalse(getUtil().pageExists("XWiki", "spamuser"));
-        assertFalse(getUtil().pageExists(getTestClassName(), "spam-in-content"));
         assertFalse(getUtil().pageExists(getTestClassName(), "spam-in-title"));
         assertFalse(getUtil().pageExists(getTestClassName(), "spam-hotline"));
         assertFalse(getUtil().pageExists(getTestClassName(), "spam-xobject"));
 
+        // Verify that "spam-in-content" page still exists since a new revision has been created above by the superadmin
+        // user but that revision 1.1 is gone.
+        assertTrue(getUtil().pageExists(getTestClassName(), "spam-in-content"));
+        getUtil().gotoPage(getTestClassName(), "spam-in-content", "viewrev", "rev=1.1");
+        vp = new ViewPage();
+        assertEquals("", vp.getContent());
+
         // Click Search again to ensure everything's been deleted
+        home = AntiSpamHomePage.gotoPage();
         home = home.searchSpam("hotline");
-        assertNull(home.getMatchedPagesText());
-        assertNull(home.getMatchedAuthorsText());
+        assertEquals("xwiki:AntiSpamTest.spam-in-content The change by [xwiki:XWiki.superadmin] won't be removed "
+            + "since it's an Admin!", home.getMatchedPagesText());
+        assertEquals("xwiki:XWiki.superadmin Excluding for safety since it has Admin access to this page",
+            home.getMatchedAuthorsText());
         assertNull(home.getMatchedRelatedPagesText());
         assertNull(home.getMatchedActivityStreamText());
-
     }
 
     /**

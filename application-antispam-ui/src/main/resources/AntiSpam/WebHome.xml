@@ -68,7 +68,7 @@
 #end
 {{/box}}
 
-#macro(displayReference $documentReference $lastAuthorReference)
+#macro(displayReference $documentReference $lastAuthorReference $isCleaningInProgress)
   #if ("$!request.check" != '')
     #set ($refDoc = $xwiki.getDocument($documentReference))
     ## Note: We should use the following instead but it's currently too time-consuming:
@@ -80,9 +80,13 @@
       * (% style='color:red' %){{{$documentReference}}} {{error}}Not spam content! You may need to add keywords!{{/error}}
     #end
   #else
-    #set ($outputMarkup = "[[{{{$documentReference}}}>>$documentReference]]")
+    #if ($isCleaningInProgress)
+      #set ($outputMarkup = "{{{$documentReference}}}")
+    #else
+      #set ($outputMarkup = "[[{{{$documentReference}}}>>$documentReference]]")
+    #end
     #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $documentReference))
-      #set ($outputMarkup = "(% style='color:red' %)${outputMarkup}(%%) (% style='color:red' %)Won't be removed since its last author is an Admin(%%)")
+      #set ($outputMarkup = "${outputMarkup} {{error}}The change by [$lastAuthorReference] won't be removed since it's an Admin!{{/error}}")
     #end
     * $outputMarkup
   #end
@@ -111,7 +115,7 @@
   #end
   #set ($outputMarkup = "{{{$event.date}}} - ${userText} - ${documentText} - {{{$event.type}}}")
   #if ($isAdminReference)
-    #set ($outputMarkup = "(% style='color:red' %)${outputMarkup}(%%) (% style='color:red' %)Won't be removed since its last author is an Admin(%%)")
+    #set ($outputMarkup = "${outputMarkup} {{error}}Event won't be removed since it's been made by an Admin{{/error}}")
   #end
   * $outputMarkup
 #end
@@ -131,6 +135,7 @@
 #if ("$!cleanedReferences" == '')
   #set ($cleanedReferences = $collectionstool.set)
 #end
+#set ($isCleaningInProgress = "$!request.confirmDelete" != '')
 #if ("$!request.query" != '')
   == Matching Pages ==
   ## Note: we make sure to surround the query string by quotes to avoid users deleting unwanted pages
@@ -139,19 +144,21 @@
   #set ($matchingReferences = $services.antispam.getMatchingDocuments("""$request.query""", 500, 0))
   #set ($lastAuthorReferences = $services.antispam.getLastAuthorReferences($matchingReferences))
   #foreach ($matchingReference in $matchingReferences)
-    #displayReference($matchingReference.documentReference, $matchingReference.lastAuthorReference)
-    #if ("$!request.confirmDelete" != '')
+    #displayReference($matchingReference.documentReference, $matchingReference.lastAuthorReference, $isCleaningInProgress)
+    #if ($isCleaningInProgress)
       #cleanDocument($matchingReference.documentReference, $lastAuthorReferences, true)
       #set ($discard = $cleanedReferences.add($matchingReference.documentReference))
     #end
   #end
   == Authors ==
+  #set ($adminAuthorReferences = [])
   #foreach ($lastAuthorReference in $lastAuthorReferences)
     #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
       * {{{$lastAuthorReference}}} {{error}}Excluding for safety since it has Admin access to this page{{/error}}
+      #set ($discard = $adminAuthorReferences.add($lastAuthorReference))
     #else
-      * [[{{{$lastAuthorReference}}}>>$lastAuthorReference]]
-      #if ("$!request.confirmDelete" != '')
+      #if ($isCleaningInProgress)
+        * {{{$lastAuthorReference}}}
         #if (!$cleanedReferences.contains($lastAuthorReference))
           #set ($userDoc = $xwiki.getDocument($lastAuthorReference))
           #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
@@ -160,17 +167,23 @@
         #else
           ** Page already cleaned!
         #end
+      #else
+        * [[{{{$lastAuthorReference}}}>>$lastAuthorReference]]
       #end
     #end
   #end
+  ## Exclude Admin authors from the rest below since:
+  ## - We don't want to list pages modified by Admin authors
+  ## - We don't want to list events done by Admin authors
+  #set ($discard = $lastAuthorReferences.removeAll($adminAuthorReferences))
   == Pages created or modified by those Authors ==
   #foreach ($lastAuthorReference in $lastAuthorReferences)
     #set ($documentReferences = $services.antispam.getDocumentsForAuthor($lastAuthorReference, 500, 0))
     #foreach ($documentReference in $documentReferences)
       ## Only handle pages that were not matching above as those have already been taken care of!
       #if (!$cleanedReferences.contains($documentReference))
-        #displayReference($documentReference, $lastAuthorReference)
-        #if ("$!request.confirmDelete" != '')
+        #displayReference($documentReference, $lastAuthorReference, $isCleaningInProgress)
+        #if ($isCleaningInProgress)
           #cleanDocument($documentReference, $lastAuthorReferences, true)
           #set ($discard = $cleanedReferences.add($lastAuthorReference))
         #end
@@ -191,7 +204,7 @@
     #set ($events = $eventStream.searchEvents($query))
     #foreach ($event in $events)
       #displayEvent($event, $isAdminReference)
-      #if ("$!request.confirmDelete" != '' &amp;&amp; !$isAdminReference)
+      #if ($isCleaningInProgress &amp;&amp; !$isAdminReference)
         #set ($discard = $eventStream.deleteEvent($event))
         ** Event deleted
       #end
@@ -205,8 +218,8 @@
   #foreach ($documentReference in $documentReferences)
     ## Only handle pages that were not matching above as those have already been taken care of!
     #if (!$cleanedReferences.contains($documentReference))
-      #displayReference($documentReference, $userReference)
-      #if ("$!request.confirmDelete" != '')
+      #displayReference($documentReference, $userReference, $isCleaningInProgress)
+      #if ($isCleaningInProgress)
         #cleanDocument($documentReference, [$userReference], true)
       #end
     #end
