@@ -22,17 +22,13 @@ package org.xwiki.contrib.antispam.internal;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.slf4j.Logger;
@@ -41,6 +37,7 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.component.util.DefaultParameterizedType;
+import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.model.reference.DocumentReference;
@@ -52,7 +49,10 @@ import org.xwiki.query.QueryManager;
 import org.xwiki.query.solr.internal.SolrQueryExecutor;
 import org.xwiki.search.solr.internal.api.FieldUtils;
 import org.xwiki.search.solr.internal.api.SolrIndexer;
+import org.xwiki.security.authorization.AuthorizationManager;
+import org.xwiki.security.authorization.Right;
 
+import com.sun.javadoc.Doc;
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.criteria.api.XWikiCriteriaService;
@@ -93,12 +93,14 @@ public class DefaultSpamCleaner implements SpamCleaner
     @Inject
     private ObservationManager observationManager;
 
+    @Inject
+    private AuthorizationManager authorizationManager;
+
     @Override
-    public Pair<List<DocumentReference>, Set<DocumentReference>> getMatchingDocuments(String solrQueryString, int nb,
-        int offset) throws AntiSpamException
+    public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
+        throws AntiSpamException
     {
-        List<DocumentReference> matchingReferences = new ArrayList<>();
-        Set<DocumentReference> lastAuthors = new HashSet<>();
+        List<MatchingReference> matchingReferences = new ArrayList<>();
 
         try {
             waitForSolrIndexing();
@@ -111,15 +113,16 @@ public class DefaultSpamCleaner implements SpamCleaner
             QueryResponse queryResponse = (QueryResponse) query.execute().get(0);
             ComponentManager componentManager = this.contextComponentManagerProvider.get();
             for (SolrDocument solrDocument : queryResponse.getResults()) {
-                matchingReferences.add(resolveSolrDocument(solrDocument, componentManager));
-                lastAuthors.add(this.userDocumentReferenceResolver.resolve(
-                    (String) solrDocument.get(FieldUtils.AUTHOR)));
+                MatchingReference matchingReference = new MatchingReference(
+                    resolveSolrDocument(solrDocument, componentManager),
+                    this.userDocumentReferenceResolver.resolve((String) solrDocument.get(FieldUtils.AUTHOR)));
+                matchingReferences.add(matchingReference);
             }
         } catch (Exception e) {
             throw new AntiSpamException(String.format("Failed to find documents matching [%s]", solrQueryString), e);
         }
 
-        return new ImmutablePair<>(matchingReferences, lastAuthors);
+        return matchingReferences;
     }
 
     @Override
@@ -153,8 +156,19 @@ public class DefaultSpamCleaner implements SpamCleaner
     public void cleanDocument(DocumentReference documentReference, Collection<DocumentReference> authorReferences,
         boolean skipActivityStream) throws AntiSpamException
     {
-        // Make sure we don't generate Activity Stream since we don't want spam cleaning to end up in the
-        // Activity as it would swamp all other activity and hide it under its volume.
+        // Extra safety: remove any admin user from the author reference list since we don't want to delete edits
+        // by admins by mistake. For example, it's easy for an admin to edit a document in which someone had added a
+        // spam keyword (without seeing it), and then when cleaning up, the last author would be associated with a
+        // content with spam and thus will have its edit removed.
+        List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
+        for (DocumentReference authorReference : authorReferences) {
+            if (!this.authorizationManager.hasAccess(Right.ADMIN, authorReference, documentReference)) {
+                filteredAuthorReferences.add(authorReference);
+            }
+        }
+
+        // Make sure we don't generate Activity Stream events since we don't want spam cleaning to end up in the
+        // Activity as it would swamp all other activities and hide it under its volume.
         if (skipActivityStream) {
             this.observationManager.notify(new AntiSpamBeginFoldEvent(), null, null);
         }
@@ -167,18 +181,18 @@ public class DefaultSpamCleaner implements SpamCleaner
             XWiki xwiki = xcontext.getWiki();
             XWikiDocument document = xwiki.getDocument(documentReference, xcontext);
             if (hasSeveralRevisions(document, xwiki, xcontext)) {
-                deleteRevisions(authorReferences, document, xwiki, xcontext);
+                deleteRevisions(filteredAuthorReferences, document, xwiki, xcontext);
             } else {
                 // Simply delete the document from all its translations but don't put it in the trash since we don't
                 // want spam to go in the trash
                 // Note: We perform an extra check to be sure we're deleting the right document...
-                if (authorReferences.contains(document.getAuthorReference())) {
+                if (filteredAuthorReferences.contains(document.getAuthorReference())) {
                     xwiki.deleteAllDocuments(document, false, xcontext);
                 }
             }
         } catch (Exception e) {
             throw new AntiSpamException(String.format("Failed to clean document [%s] of changes made by author [%s]",
-                documentReference, authorReferences), e);
+                documentReference, filteredAuthorReferences), e);
         } finally {
             if (skipActivityStream) {
                 this.observationManager.notify(new AntiSpamEndFoldEvent(), null, null);

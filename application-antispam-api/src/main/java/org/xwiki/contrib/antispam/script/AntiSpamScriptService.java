@@ -21,6 +21,7 @@ package org.xwiki.contrib.antispam.script;
 
 import java.io.StringReader;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,10 +30,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
+import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
@@ -57,10 +58,19 @@ public class AntiSpamScriptService implements ScriptService
     @Inject
     private ContextualAuthorizationManager authorizationManager;
 
-    public Pair<List<DocumentReference>, Set<DocumentReference>> getMatchingDocuments(String solrQueryString, int nb,
-        int offset) throws AntiSpamException
+    public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
+        throws AntiSpamException
     {
         return this.cleaner.getMatchingDocuments(solrQueryString, nb, offset);
+    }
+
+    public Set<DocumentReference> getLastAuthorReferences(Collection<MatchingReference> matchingReferences)
+    {
+        Set<DocumentReference> lastAuthorReferences = new HashSet<>();
+        for (MatchingReference matchingReference : matchingReferences) {
+            lastAuthorReferences.add(matchingReference.getLastAuthorReference());
+        }
+        return lastAuthorReferences;
     }
 
     public void cleanDocument(DocumentReference documentReference, Collection<DocumentReference> authorReferences,

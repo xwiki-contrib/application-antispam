@@ -258,7 +258,12 @@ public class AntiSpamTest extends AbstractTest
         // Verify the Matched Authors
         assertEquals("xwiki:XWiki.spamuser", home.getMatchedAuthorsText());
         // Verify the Matched Related Pages
-        assertEquals("xwiki:AntiSpamTest.relatedpage", home.getMatchedRelatedPagesText());
+        assertEquals("xwiki:XWiki.spamuser\n"
+            + "xwiki:AntiSpamTest.spam-in-content\n"
+            + "xwiki:AntiSpamTest.spam-in-title\n"
+            + "xwiki:AntiSpamTest.spam-hotline\n"
+            + "xwiki:AntiSpamTest.spam-xobject\n"
+            + "xwiki:AntiSpamTest.relatedpage", home.getMatchedRelatedPagesText());
         // Verify the Matched Activity Stream
         List<String> asTexts = Arrays.asList(StringUtils.split(home.getMatchedActivityStreamText(), "\n "));
         assertTrue(asTexts.size() >= 7);

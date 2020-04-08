@@ -21,9 +21,7 @@ package org.xwiki.contrib.antispam;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
@@ -39,8 +37,7 @@ public interface SpamCleaner
      * @return the list of references of matching documents and their last authors
      * @exception AntiSpamException if an error occurs such as a failure to find matching documents
      */
-    Pair<List<DocumentReference>, Set<DocumentReference>> getMatchingDocuments(String solrQueryString, int nb,
-        int offset) throws AntiSpamException;
+    List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset) throws AntiSpamException;
 
     /**
      * Clean the passed documents of all changes made by the passed authors.
