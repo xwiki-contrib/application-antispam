@@ -118,7 +118,7 @@
     #end
     &lt;div&gt;
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="deleteEvents" value="Delete Selected Events"
-        class="button"/&gt;&lt;/span&gt;
+        class="button btn-danger"/&gt;&lt;/span&gt;
     &lt;/div&gt;
   &lt;/form&gt;
   {{/html}}
@@ -145,11 +145,10 @@
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="check" value="Check for Spam"
         class="button"/&gt;&lt;/span&gt;
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="delete" value="Delete"
-        class="button"/&gt;&lt;/span&gt;
+        class="button btn-danger"/&gt;&lt;/span&gt;
     #end
     #if ("$!request.delete" != '')
-      &lt;input class="btn btn-danger" type="submit" name="confirmDelete" value="Confirm Delete"
-        class="button btn-danger"/&gt;
+      &lt;input type="submit" name="confirmDelete" value="Confirm Delete" class="button btn-danger"/&gt;
     #end
   &lt;/div&gt;
 &lt;/form&gt;

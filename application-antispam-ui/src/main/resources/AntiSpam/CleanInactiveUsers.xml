@@ -39,23 +39,13 @@
 
 {{velocity}}
 #if ("$!request.deleteInactiveUsers" != 'Delete Inactive Users')
-{{html}}
-&lt;form id="search" class="xform"&gt;
-  &lt;div&gt;
-    &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="deleteInactiveUsers" value="Delete Inactive Users" class="button"/&gt;&lt;/span&gt;
-  &lt;/div&gt;
-&lt;/form&gt;
-{{/html}}
-#end
-
-#if ("$!request.deleteInactiveUsers" != 'Delete Inactive Users')
   #if ("$!request.limit" == '')
     #set ($limit = 50)
   #else
     #set ($limit = $numbertool.toNumber($request.limit))
   #end
   #set ($inactiveAuthorReferences = $services.antispam.getInactiveAuthors(30, false, 50))
-  #if ($inactiveAuthorReferences.size() &gt; 0) 
+  #if ($inactiveAuthorReferences.size() &gt; 0)
     Inactive users (max $limit):
     #foreach ($authorReferenceString in $inactiveAuthorReferences)
       * [[{{{$authorReferenceString}}}&gt;&gt;$authorReferenceString]]
@@ -64,17 +54,32 @@
     No inactive user found!
   #end
 #else
-  Cleaning inactive users...
-
   #set ($jobStatus = $services.antispam.currentCleanAuthorJobStatus)
   #if ("$!jobStatus" == '' || $jobStatus.state == 'FINISHED')
     #set ($inactiveAuthorReferences = $services.antispam.getInactiveAuthors(30, false, 50))
-    #set ($discard = $services.antispam.cleanAuthors($inactiveAuthorReferences, true))
-    #set ($jobStatus = $services.antispam.currentCleanAuthorJobStatus)
+    #if ($inactiveAuthorReferences.size() &gt; 0)
+      #set ($discard = $services.antispam.cleanAuthors($inactiveAuthorReferences, true))
+      #set ($jobStatus = $services.antispam.currentCleanAuthorJobStatus)
+    #else
+    #end
   #end
-  {{html}}
-    #displayJobStatus($jobStatus)
-  {{/html}}
+  #if ("$!jobStatus" == '' || $jobStatus.state == 'FINISHED')
+    Cleaning inactive users...
+
+    {{html}}
+      #displayJobStatus($jobStatus)
+    {{/html}}
+  #end
+#end
+
+#if ("$!request.deleteInactiveUsers" != 'Delete Inactive Users' &amp;&amp; "$!inactiveAuthorReferences" != '' &amp;&amp; $inactiveAuthorReferences.size() &gt; 0)
+{{html}}
+&lt;form id="search" class="xform"&gt;
+  &lt;div&gt;
+    &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="deleteInactiveUsers" value="Delete Inactive Users" class="button btn-danger"/&gt;&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/form&gt;
+{{/html}}
 #end
 {{/velocity}}</content>
 </xwikidoc>
