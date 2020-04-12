@@ -39,6 +39,9 @@ public class AntiSpamHomePage extends ViewPage
     @FindBy(xpath = "//input[@name = 'searchSpam']")
     private WebElement searchSubmit;
 
+    @FindBy(xpath = "//input[@name = 'findInactiveUsers']")
+    private WebElement findInactiveUsersSubmit;
+
     @FindBy(xpath = "//input[@name = 'delete']")
     private WebElement deleteSubmit;
 
@@ -140,7 +143,13 @@ public class AntiSpamHomePage extends ViewPage
 
     public String getMatchedActivityStreamText()
     {
-        return getText("//h2[@id = 'HEvents']/following-sibling::ul");
+        return getText("//form[@id = 'events']/div");
+    }
+
+    public AntiSpamInactiveUsersPage clickFindInactiveUsers()
+    {
+        this.findInactiveUsersSubmit.click();
+        return new AntiSpamInactiveUsersPage();
     }
 
     private String getText(String xpath)

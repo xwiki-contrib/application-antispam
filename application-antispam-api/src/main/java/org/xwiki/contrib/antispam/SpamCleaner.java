@@ -63,4 +63,25 @@ public interface SpamCleaner
      */
     List<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
         throws AntiSpamException;
+
+    /**
+     * Find all user references for the following criterias:
+     * <ul>
+     *   <li>The user profile page jas been created more than elapsedDays ago</li>
+     *   <li>The user profile page doesn't have an avatar (if cleanAuthorsWithAvatars is false)</li>
+     *   <li>The user profile page doesn't have an XObject of type XWiki.OIDC.ConsentClass. The reason for this check
+     *     is because we can have users who create users on xwiki.org just to be able to log on forum.xwiki.org for
+     *     example (or on l10n.xwiki.org). We don't want to consider these users as inactive and remove their
+     *     accounts or they won't be able to log on these other sites...</li>
+     * </ul>
+     *
+     * @param elapsedDays number of days that the user profile page has seen a modification
+     * @param cleanAuthorsWithAvatars if true then also clean user profiles having an avatar set
+     * @param count the maximum number of inactive user references to return
+     * @return the inactive author references
+     * @throws AntiSpamException if an error occurs
+     * @since 1.8
+     */
+    List<DocumentReference> getInactiveAuthors(int elapsedDays, boolean cleanAuthorsWithAvatars, int count)
+        throws AntiSpamException;
 }

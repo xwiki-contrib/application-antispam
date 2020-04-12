@@ -28,6 +28,7 @@ import org.openqa.selenium.By;
 import org.xwiki.administration.test.po.AdministrationPage;
 import org.xwiki.antispam.test.po.AntiSpamAdministrationSectionPage;
 import org.xwiki.antispam.test.po.AntiSpamHomePage;
+import org.xwiki.antispam.test.po.AntiSpamInactiveUsersPage;
 import org.xwiki.panels.test.po.ApplicationsPanel;
 import org.xwiki.rest.model.jaxb.Page;
 import org.xwiki.test.ui.AbstractTest;
@@ -49,6 +50,12 @@ public class AntiSpamTest extends AbstractTest
 
     @Test
     public void verifyAntiSpam() throws Exception
+    {
+        //verifyHomePageFeatures();
+        verifyInactiveUserCleaning();
+    }
+
+    public void verifyHomePageFeatures() throws Exception
     {
         // Step 1: We verify the spam checking feature
 
@@ -297,12 +304,48 @@ public class AntiSpamTest extends AbstractTest
         // Click Search again to ensure everything's been deleted
         home = AntiSpamHomePage.gotoPage();
         home = home.searchSpam("hotline");
-        assertEquals("xwiki:AntiSpamTest.spam-in-content The change by [xwiki:XWiki.superadmin] won't be removed "
-            + "since it's an Admin!", home.getMatchedPagesText());
+        assertEquals("xwiki:AntiSpamTest.spam-in-content This change was made by [xwiki:XWiki.superadmin] and won't be "
+            + "removed since it's an Admin!", home.getMatchedPagesText());
         assertEquals("xwiki:XWiki.superadmin Excluding for safety since it has Admin access to this page",
             home.getMatchedAuthorsText());
         assertNull(home.getMatchedRelatedPagesText());
         assertNull(home.getMatchedActivityStreamText());
+    }
+
+    public void verifyInactiveUserCleaning()
+    {
+        getUtil().loginAsSuperAdmin();
+
+        // Create a user profile page with a date in the past so that it's considered inactive.
+        getUtil().createUser("InactiveUser", "pass", null);
+        // Note: the content requires PR so we need to exclude it for the PR checker in the pom.xml
+        getUtil().createPage(getTestClassName(), "InactiveUserSetup", "{{velocity}}\n"
+            + "#set ($calendar = $datetool.systemCalendar)\n"
+            + "#set ($discard = $calendar.add(5, -60))\n"
+            + "#set ($oldDate = $calendar.time)\n"
+            + "\n"
+            + "#set ($mydoc = $xwiki.getDocument('XWiki.InactiveUser'))\n"
+            + "#set ($discard = $mydoc.document.setDate($oldDate))\n"
+            + "\n"
+            + "## Prevents XWiki from setting the current date on save.\n"
+            + "## Note that it'll also not create a new revision\n"
+            + "#set ($discard = $mydoc.document.setContentDirty(false))\n"
+            + "#set ($discard = $mydoc.document.setMetaDataDirty(false))\n"
+            + "\n"
+            + "#set ($discard = $mydoc.save())\n"
+            + "{{/velocity}}", "");
+        AntiSpamHomePage homePage = AntiSpamHomePage.gotoPage();
+        AntiSpamInactiveUsersPage aiup = homePage.clickFindInactiveUsers();
+        List<String> users = aiup.getInactiveUsers();
+        assertEquals(1, users.size());
+        assertEquals("xwiki:XWiki.InactiveUser", users.get(0));
+
+        // Clean the inactive user
+        aiup.clickCleanInactiveUsers();
+
+        // TODO: Wait for the job to finish. We cannot ATM since the job UI doesn't display correctly. This needs to
+        // be fixed. Once it is, wait for the job to finish and go to the AntiSpamInactiveUsersPage page again and
+        // verify there's the message that no inactive user is found.
     }
 
     /**

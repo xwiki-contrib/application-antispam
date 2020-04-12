@@ -21,7 +21,9 @@ package org.xwiki.contrib.antispam.internal;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -40,9 +42,14 @@ import org.xwiki.component.util.DefaultParameterizedType;
 import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
+import org.xwiki.eventstream.Event;
+import org.xwiki.eventstream.EventStream;
+import org.xwiki.model.EntityType;
+import org.xwiki.model.ModelContext;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReferenceSerializer;
+import org.xwiki.model.reference.WikiReference;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.query.Query;
 import org.xwiki.query.QueryManager;
@@ -52,7 +59,6 @@ import org.xwiki.search.solr.internal.api.SolrIndexer;
 import org.xwiki.security.authorization.AuthorizationManager;
 import org.xwiki.security.authorization.Right;
 
-import com.sun.javadoc.Doc;
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.criteria.api.XWikiCriteriaService;
@@ -95,6 +101,12 @@ public class DefaultSpamCleaner implements SpamCleaner
 
     @Inject
     private AuthorizationManager authorizationManager;
+
+    @Inject
+    private EventStream eventStream;
+
+    @Inject
+    private ModelContext modelContext;
 
     @Override
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
@@ -156,43 +168,128 @@ public class DefaultSpamCleaner implements SpamCleaner
     public void cleanDocument(DocumentReference documentReference, Collection<DocumentReference> authorReferences,
         boolean skipActivityStream) throws AntiSpamException
     {
-        // Extra safety: remove any admin user from the author reference list since we don't want to delete edits
-        // by admins by mistake. For example, it's easy for an admin to edit a document in which someone had added a
-        // spam keyword (without seeing it), and then when cleaning up, the last author would be associated with a
-        // content with spam and thus will have its edit removed.
+        // Extra safety: exclude important users (admins, etc) from the author reference list since we don't want to
+        // delete edits by important users by mistake. For example, it's easy for an admin to edit a document in which
+        // someone had added a spam keyword (without seeing it), and then when cleaning up, the last author would be
+        // associated with a content with spam and thus will have its edit removed.
         List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
         for (DocumentReference authorReference : authorReferences) {
-            if (!this.authorizationManager.hasAccess(Right.ADMIN, authorReference, documentReference)) {
+            if (!isImportantAuthor(authorReference, documentReference)) {
                 filteredAuthorReferences.add(authorReference);
             }
         }
 
+        clean(skipActivityStream, () -> {
+            try {
+                // (Performance optimization) Check if the document has more than 1 revision and if not then simply
+                // delete the document. This is because getting the full revision list could take a lot of time if
+                // a document has a lot of revisions.
+                XWikiContext xcontext = this.contextProvider.get();
+                XWiki xwiki = xcontext.getWiki();
+                XWikiDocument document = xwiki.getDocument(documentReference, xcontext);
+                if (hasSeveralRevisions(document, xwiki, xcontext)) {
+                    deleteRevisions(filteredAuthorReferences, document, xwiki, xcontext);
+                } else {
+                    // Simply delete the document from all its translations but don't put it in the trash since we don't
+                    // want spam to go in the trash
+                    // Note: We perform an extra check to be sure we're deleting the right document...
+                    if (filteredAuthorReferences.contains(document.getAuthorReference())) {
+                        xwiki.deleteAllDocuments(document, false, xcontext);
+                    }
+                }
+            } catch (Exception e) {
+                throw new AntiSpamException(String.format(
+                    "Failed to clean document [%s] of changes made by author [%s]",
+                    documentReference, filteredAuthorReferences), e);
+            }
+        });
+    }
+
+    @Override
+    public List<DocumentReference> getInactiveAuthors(int elapsedDays, boolean cleanAuthorsWithAvatars, int count)
+        throws AntiSpamException
+    {
+        try {
+            return getAuthorsWithActivity(getInactiveAuthorCandidates(elapsedDays, cleanAuthorsWithAvatars), count);
+        } catch (Exception e) {
+            throw new AntiSpamException("Failed to find inactive users", e);
+        }
+    }
+
+    private List<DocumentReference> getAuthorsWithActivity(List<DocumentReference> authorReferences, int count)
+        throws Exception
+    {
+        List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
+        int counter = 0;
+        for (DocumentReference authorReference : authorReferences) {
+            // Does the user have done at least one change in the whole wiki or wiki farm?
+            // Note: if XWiki is configured to have a single event stream store then it searches in the full farm.
+            // Otherwise it searches only in the current wiki.
+            Query query = this.queryManager.createQuery("where event.user = :user", Query.XWQL);
+            query.bindValue("user", this.entityReferenceSerializer.serialize(authorReference));
+            query.setLimit(1);
+            List<Event> events = this.eventStream.searchEvents(query);
+            if (events.isEmpty()) {
+                if (!isImportantAuthor(authorReference, null)) {
+                    filteredAuthorReferences.add(authorReference);
+                    counter++;
+                }
+            }
+            if (counter == count) {
+                break;
+            }
+        }
+        return filteredAuthorReferences;
+    }
+
+    private boolean isImportantAuthor(DocumentReference authorReference, DocumentReference documentReference)
+    {
+        WikiReference wikiReference =
+            (WikiReference) this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI);
+        boolean isImportantAuthor = this.authorizationManager.hasAccess(Right.ADMIN, authorReference, wikiReference)
+            || this.authorizationManager.hasAccess(Right.PROGRAM, authorReference, wikiReference);
+        if (documentReference != null) {
+            isImportantAuthor = isImportantAuthor || this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
+                documentReference);
+        }
+        return isImportantAuthor;
+    }
+
+    private List<DocumentReference> getInactiveAuthorCandidates(int elapsedDays, boolean cleanAuthorsWithAvatars)
+        throws Exception
+    {
+        List<DocumentReference> candidates = new ArrayList<>();
+        String avatarClause = cleanAuthorsWithAvatars ? "" : "and user.avatar = ''";
+        Query query = this.queryManager.createQuery("from doc.object(XWiki.XWikiUsers) as user "
+                + "where doc.date < :date "
+                + avatarClause
+                + "and doc.fullName not in (select distinct obj2.name from BaseObject as obj2 where "
+                + "obj2.className = 'XWiki.OIDC.ConsentClass')",
+            Query.XWQL);
+        query.bindValue("date", getDateMinusDays(elapsedDays));
+        for (String authorReferenceString : query.<String>execute()) {
+            candidates.add(this.userDocumentReferenceResolver.resolve(authorReferenceString));
+        }
+
+        return candidates;
+    }
+
+    private Date getDateMinusDays(int elapsedDays)
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.DATE, -elapsedDays);
+        return calendar.getTime();
+    }
+
+    private void clean(boolean skipActivityStream, CleaningExecutor executor) throws AntiSpamException
+    {
         // Make sure we don't generate Activity Stream events since we don't want spam cleaning to end up in the
         // Activity as it would swamp all other activities and hide it under its volume.
         if (skipActivityStream) {
             this.observationManager.notify(new AntiSpamBeginFoldEvent(), null, null);
         }
-
         try {
-            // (Performance optimization) Check if the document has more than 1 revision and if not then simply
-            // delete the document. This is because getting the full revision list could take a lot of time if
-            // a document has a lot of revisions.
-            XWikiContext xcontext = this.contextProvider.get();
-            XWiki xwiki = xcontext.getWiki();
-            XWikiDocument document = xwiki.getDocument(documentReference, xcontext);
-            if (hasSeveralRevisions(document, xwiki, xcontext)) {
-                deleteRevisions(filteredAuthorReferences, document, xwiki, xcontext);
-            } else {
-                // Simply delete the document from all its translations but don't put it in the trash since we don't
-                // want spam to go in the trash
-                // Note: We perform an extra check to be sure we're deleting the right document...
-                if (filteredAuthorReferences.contains(document.getAuthorReference())) {
-                    xwiki.deleteAllDocuments(document, false, xcontext);
-                }
-            }
-        } catch (Exception e) {
-            throw new AntiSpamException(String.format("Failed to clean document [%s] of changes made by author [%s]",
-                documentReference, filteredAuthorReferences), e);
+            executor.clean();
         } finally {
             if (skipActivityStream) {
                 this.observationManager.notify(new AntiSpamEndFoldEvent(), null, null);
@@ -293,5 +390,10 @@ public class DefaultSpamCleaner implements SpamCleaner
         while (this.solrIndexer.getQueueSize() > 0) {
             Thread.sleep(100L);
         }
+    }
+
+    private interface CleaningExecutor
+    {
+        void clean() throws AntiSpamException;
     }
 }

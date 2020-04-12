@@ -20,6 +20,7 @@
 package org.xwiki.contrib.antispam.script;
 
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +38,11 @@ import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
+import org.xwiki.contrib.antispam.internal.DeleteAuthorRequest;
+import org.xwiki.contrib.antispam.internal.DeleteAuthorsJob;
+import org.xwiki.job.JobExecutor;
+import org.xwiki.job.JobStatusStore;
+import org.xwiki.job.event.status.JobStatus;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
@@ -57,6 +63,12 @@ public class AntiSpamScriptService implements ScriptService
 
     @Inject
     private ContextualAuthorizationManager authorizationManager;
+
+    @Inject
+    private JobExecutor jobExecutor;
+
+    @Inject
+    private JobStatusStore jobStatusStore;
 
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
         throws AntiSpamException
@@ -103,6 +115,42 @@ public class AntiSpamScriptService implements ScriptService
             throw new AntiSpamException(String.format("Error getting XML content for [%s]",
                 document.getDocumentReference()), e);
         }
+    }
+
+    /**
+     * @since 1.8
+     */
+    public List<DocumentReference> getInactiveAuthors(int elapsedDays, boolean cleanAuthorsWithAvatars, int count)
+        throws AntiSpamException
+    {
+        return this.cleaner.getInactiveAuthors(elapsedDays, cleanAuthorsWithAvatars, count);
+    }
+
+    /**
+     * @since 1.8
+     */
+    public void cleanAuthors(List<DocumentReference> authorReferences, boolean skipEventStreamRecording)
+        throws AntiSpamException
+    {
+        DeleteAuthorRequest request = new DeleteAuthorRequest();
+        request.setId(DeleteAuthorsJob.TYPE);
+        request.setAuthorReferences(authorReferences);
+        request.setSkipEventStream(skipEventStreamRecording);
+        request.setVerbose(true);
+
+        try {
+            this.jobExecutor.execute(DeleteAuthorsJob.TYPE, request);
+        } catch (Exception e) {
+            throw new AntiSpamException("Failed to execute the clean authors job", e);
+        }
+    }
+
+    /**
+     * @since 1.8
+     */
+    public JobStatus getCurrentCleanAuthorJobStatus()
+    {
+        return this.jobStatusStore.getJobStatus(Arrays.asList(DeleteAuthorsJob.TYPE));
     }
 
     private SpamChecker getSpamChecker(String hint) throws AntiSpamException

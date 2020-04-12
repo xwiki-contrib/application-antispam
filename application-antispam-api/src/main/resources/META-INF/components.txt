@@ -1,2 +1,3 @@
-org.xwiki.contrib.antispam.internal.DefaultSpamCleaner
 org.xwiki.contrib.antispam.script.AntiSpamScriptService
+org.xwiki.contrib.antispam.internal.DefaultSpamCleaner
+org.xwiki.contrib.antispam.internal.DeleteAuthorsJob

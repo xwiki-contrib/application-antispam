@@ -49,8 +49,10 @@
     </xwikiCfgPlugins>
     <!-- Functional tests are allowed to output content to the console -->
     <xwiki.surefire.captureconsole.skip>true</xwiki.surefire.captureconsole.skip>
-    <!-- Antispam home page requires PR to display the Event Stream so we need to exclude it from the PR checker ATM -->
-    <xwikiPropertiesAdditionalProperties>test.prchecker.excludePattern=.*:AntiSpam\.WebHome</xwikiPropertiesAdditionalProperties>
+    <!-- Some pages require PR ATM:
+      - Antispam home page requires PR to display the Event Stream
+      - InactiveUserSetup requires PR to set the date of a user doc in the past -->
+    <xwikiPropertiesAdditionalProperties>test.prchecker.excludePattern=.*:AntiSpam\.WebHome|.*:AntiSpamTest\.InactiveUserSetup</xwikiPropertiesAdditionalProperties>
   </properties>
   <dependencies>
     <dependency>
