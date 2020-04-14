@@ -70,23 +70,32 @@ public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJo
     @Override
     protected void runInternal() throws Exception
     {
-        // Protection. If the user has Admin rights at the level of the wiki, then don't remove it!
         Collection<DocumentReference> authorReferences = this.request.getAuthorReferences();
-        List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
-        for (DocumentReference authorReference : authorReferences) {
-            if (!this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
-                this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI)))
-            {
-                filteredAuthorReferences.add(authorReference);
-            }
-        }
 
-        this.progressManager.pushLevelProgress(filteredAuthorReferences.size(), this);
+        this.progressManager.pushLevelProgress(authorReferences.size(), this);
 
         try {
+            // Protection. If the user has Admin rights at the level of the wiki, then don't remove it!
+            List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
+            for (DocumentReference authorReference : authorReferences) {
+                if (!this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
+                    this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI)))
+                {
+                    this.progressManager.startStep(this);
+                    if (request.isVerbose()) {
+                        this.logger.info("Filtering out user [{}] since it has Admin rights on the wiki...",
+                            authorReference);
+                    }
+                    filteredAuthorReferences.add(authorReference);
+                }
+            }
+
             clean(() -> {
                 XWikiContext xcontext = this.contextProvider.get();
                 XWiki xwiki = xcontext.getWiki();
+                if (request.isVerbose()) {
+                    this.logger.info("Starting removal of [{}] inactive users...", filteredAuthorReferences.size());
+                }
                 for (DocumentReference authorReference : filteredAuthorReferences) {
                     this.progressManager.startStep(this);
                     if (this.status.isCanceled()) {
