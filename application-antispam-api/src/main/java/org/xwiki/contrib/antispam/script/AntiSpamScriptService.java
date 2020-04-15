@@ -77,7 +77,12 @@ public class AntiSpamScriptService implements ScriptService
     {
         Set<DocumentReference> lastAuthorReferences = new HashSet<>();
         for (MatchingReference matchingReference : matchingReferences) {
-            lastAuthorReferences.add(matchingReference.getLastAuthorReference());
+            // Remove null author references (meaning the guest user AFAIK) since that would cause some NPE down the
+            // line when it's used (unless the calling code checks for it, but best to remove it for safety,
+            // especially as we don't care about cleaning guest user ;)).
+            if (matchingReference != null) {
+                lastAuthorReferences.add(matchingReference.getLastAuthorReference());
+            }
         }
         return lastAuthorReferences;
     }
