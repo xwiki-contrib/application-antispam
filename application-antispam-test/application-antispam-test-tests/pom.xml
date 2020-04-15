@@ -99,6 +99,10 @@
           <groupId>org.xwiki.platform</groupId>
           <artifactId>xwiki-platform-component-script</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.platform</groupId>
+          <artifactId>xwiki-platform-user-api</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

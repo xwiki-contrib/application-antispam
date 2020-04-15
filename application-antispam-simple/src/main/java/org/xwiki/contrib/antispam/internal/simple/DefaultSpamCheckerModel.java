@@ -30,6 +30,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
@@ -77,6 +78,12 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     private static final DocumentReference EXCLUDES_DOCUMENT_REFERENCE =
         new DocumentReference("xwiki", "AntiSpam", "Excludes");
 
+    private static final DocumentReference KNOWN_USER_REFERENCES =
+        new DocumentReference("xwiki", "AntiSpam", "KnownUsers");
+
+    private static final DocumentReference KNOWN_GROUP_REFERENCES =
+        new DocumentReference("xwiki", "AntiSpam", "KnownGroups");
+
     @Inject
     private Logger logger;
 
@@ -87,23 +94,13 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     private EntityReferenceSerializer<String> entityReferenceSerializer;
 
     @Override
-    public List<String> getSpamAddresses() throws AntiSpamException
+    public List<String> getSpamAddresses()
     {
-        List<String> addresses;
-        try {
-            XWikiContext xcontext = getXWikiContext();
-            XWikiDocument addressDocument = getDocument(ADDRESSES_DOCUMENT_REFERENCE, xcontext);
-            // Parse the IPs from the content
-            addresses = IOUtils.readLines(new StringReader(addressDocument.getContent()));
-        } catch (Exception e) {
-            throw new AntiSpamException(String.format("Failed to get document containing spam IP addresses [%s]",
-                ADDRESSES_DOCUMENT_REFERENCE.toString()), e);
-        }
-        return addresses;
+        return getDocumentContent(ADDRESSES_DOCUMENT_REFERENCE);
     }
 
     @Override
-    public List<String> getSpamKeywords() throws AntiSpamException
+    public List<String> getSpamKeywords()
     {
         List<String> keywords;
         try {
@@ -118,8 +115,9 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             // Parse the Keywords from the content, ignoring comments
             keywords = parseContentByLine(keywordsDocument.getContent());
         } catch (Exception e) {
-            throw new AntiSpamException(String.format("Failed to get document containing spam keywords [%s]",
-                KEYWORDS_DOCUMENT_REFERENCE.toString()), e);
+            this.logger.warn("Failed to get document containing spam keywords [%s]. Root reason: [{}]",
+                KEYWORDS_DOCUMENT_REFERENCE.toString(), ExceptionUtils.getRootCauseMessage(e));
+            keywords = Collections.emptyList();
         }
         return keywords;
     }
@@ -222,17 +220,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     @Override
     public List<String> getExcludedSpaces()
     {
-        List<String> excludes;
-        try {
-            XWikiContext xcontext = getXWikiContext();
-            XWikiDocument excludesDocument = getDocument(EXCLUDES_DOCUMENT_REFERENCE, xcontext);
-            excludes = parseContentByLine(excludesDocument.getContent());
-        } catch (Exception e) {
-            this.logger.error("Failed to get document containing excludes [{}]",
-                EXCLUDES_DOCUMENT_REFERENCE.toString(), e);
-            excludes = Collections.emptyList();
-        }
-        return excludes;
+        return getDocumentContent(EXCLUDES_DOCUMENT_REFERENCE);
     }
 
     @Override
@@ -252,6 +240,33 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
                 "Failed to log spam keywords [%s] from user [%s] for document [%s], in document [%s]",
                 matchedKeywordsString, authorReference, documentReference, LOGS_DOCUMENT_REFERENCE.toString()), e);
         }
+    }
+
+    @Override
+    public List<String> getKnownUsers()
+    {
+        return getDocumentContent(KNOWN_USER_REFERENCES);
+    }
+
+    @Override
+    public List<String> getKnownGroups()
+    {
+        return getDocumentContent(KNOWN_GROUP_REFERENCES);
+    }
+
+    private List<String> getDocumentContent(DocumentReference reference)
+    {
+        List<String> result;
+        try {
+            XWikiContext xcontext = getXWikiContext();
+            XWikiDocument document = getDocument(reference, xcontext);
+            result = parseContentByLine(document.getContent());
+        } catch (Exception e) {
+            this.logger.warn("Failed to get document [{}]. Root reason: [{}]", reference,
+                ExceptionUtils.getRootCauseMessage(e));
+            result = Collections.emptyList();
+        }
+        return result;
     }
 
     private BaseObject getConfigOject() throws Exception
@@ -279,7 +294,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
 
     private List<String> parseContentByLine(String content) throws IOException
     {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (String line : IOUtils.readLines(new StringReader(content))) {
             if (!StringUtils.isBlank(line) && !line.startsWith("#")) {
                 result.add(line);

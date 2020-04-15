@@ -127,6 +127,14 @@
               <type>customizable</type>
             </entry>
             <entry>
+              <document>AntiSpam.KnownUsers</document>
+              <type>customizable</type>
+            </entry>
+            <entry>
+              <document>AntiSpam.KnownGroups</document>
+              <type>customizable</type>
+            </entry>
+            <entry>
               <document>AntiSpam.IPAddresses</document>
               <type>customizable</type>
             </entry>

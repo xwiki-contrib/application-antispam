@@ -97,7 +97,7 @@
   #end
   #if ($isForm)
     &lt;div&gt;
-      &lt;input type="checkbox" id="$event.id" name="event-${event.id}"&gt;
+      &lt;input type="checkbox" id="$event.id" name="event-${event.id}"/&gt;
       &lt;label for="$event.id"&gt;$outputMarkup&lt;/label&gt;
     &lt;/div&gt;
   #else
@@ -129,6 +129,7 @@
 #if ("$!request.findInactiveUsers" == 'Find Inactive Users')
   $response.sendRedirect($xwiki.getURL('AntiSpam.CleanInactiveUsers'))
 #end
+#set ($filterKnownUsers = $request.filterKnownUsers == 'Filter Known Users')
 
 {{html}}
 &lt;form id="search" class="xform"&gt;
@@ -151,12 +152,27 @@
       &lt;input type="submit" name="confirmDelete" value="Confirm Delete" class="button btn-danger"/&gt;
     #end
   &lt;/div&gt;
+  #if ("$!request.query" == '' &amp;&amp; "$!request.user" == '')
+    #if ($filterKnownUsers)
+      &lt;div&gt;
+        &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="unfilterKnownUsers" value="UnFilter Known Users"
+          class="button"/&gt;&lt;/span&gt;
+      &lt;/div&gt;
+    #else
+      &lt;div&gt;
+        &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="filterKnownUsers" value="Filter Known Users"
+          class="button"/&gt;&lt;/span&gt;
+      &lt;/div&gt;
+    #end
+  #end
 &lt;/form&gt;
 {{/html}}
 
 {{box cssClass="floatinginfobox" title="**Configuration**"}}
 * [[Spam Keywords&gt;&gt;Keywords]]
 * [[Space Excludes&gt;&gt;Excludes]]
+* [[Known Users&gt;&gt;KnownUsers]]
+* [[Known Groups&gt;&gt;KnownGroups]]
 {{/box}}
 
 {{box cssClass="floatinginfobox" title="**Results**"}}
@@ -185,9 +201,16 @@
 ## -------------------------------------------------------------------
 ## Display documents and users matching spam keyword and users entered
 ## -------------------------------------------------------------------
+#set ($filterKnownUsers = $request.filterKnownUsers == 'Filter Known Users')
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
-  #displayEventStream($services.query.xwql("order by event.date desc").setLimit(50))
+  #if ($filterKnownUsers)
+    #set ($query = $services.query.xwql("where event.user not in (:knownUsers) order by event.date desc"))
+    #set ($query = $query.bindValue('knownUsers', $services.antispam.knownUserReferences))
+  #else
+    #set ($query = $services.query.xwql("order by event.date desc"))
+  #end
+  #displayEventStream($query.setLimit(50))
 #end
 ## Starting with XWiki 11.x (don't recall the exact version, $collectionstool was deprecated/removed).
 ## Let's support all versions of XWiki.

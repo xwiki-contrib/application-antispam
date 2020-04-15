@@ -21,6 +21,7 @@ package org.xwiki.contrib.antispam;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
@@ -84,4 +85,12 @@ public interface SpamCleaner
      */
     List<DocumentReference> getInactiveAuthors(int elapsedDays, boolean cleanAuthorsWithAvatars, int count)
         throws AntiSpamException;
+
+    /**
+     * @return all the known users, i.e. users that should not be cleaned and that should be filtered out when listing
+     *         filtered changes
+     * @throws AntiSpamException if an error occurs
+     * @since 1.8
+     */
+    Set<DocumentReference> getKnownUserReferences() throws AntiSpamException;
 }

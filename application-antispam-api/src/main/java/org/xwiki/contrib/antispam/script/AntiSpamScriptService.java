@@ -44,6 +44,7 @@ import org.xwiki.job.Job;
 import org.xwiki.job.JobExecutor;
 import org.xwiki.job.event.status.JobStatus;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
 import org.xwiki.security.authorization.Right;
@@ -66,6 +67,9 @@ public class AntiSpamScriptService implements ScriptService
 
     @Inject
     private JobExecutor jobExecutor;
+
+    @Inject
+    private EntityReferenceSerializer<String> entityReferenceSerializer;
 
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
         throws AntiSpamException
@@ -154,6 +158,18 @@ public class AntiSpamScriptService implements ScriptService
     {
         Job job = this.jobExecutor.getJob(Arrays.asList(DeleteAuthorsJob.TYPE));
         return job == null ? null : job.getStatus();
+    }
+
+    /**
+     * @since 1.8
+     */
+    public Set<String> getKnownUserReferences() throws AntiSpamException
+    {
+        Set<String> userReferencesAsString = new HashSet<>();
+        for (DocumentReference userReference : this.cleaner.getKnownUserReferences()) {
+            userReferencesAsString.add(this.entityReferenceSerializer.serialize(userReference));
+        }
+        return userReferencesAsString;
     }
 
     private SpamChecker getSpamChecker(String hint) throws AntiSpamException

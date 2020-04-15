@@ -17,14 +17,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.antispam.internal;
+package org.xwiki.contrib.antispam.internal.simple;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -42,6 +44,8 @@ import org.xwiki.component.util.DefaultParameterizedType;
 import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
+import org.xwiki.contrib.antispam.internal.AntiSpamBeginFoldEvent;
+import org.xwiki.contrib.antispam.internal.AntiSpamEndFoldEvent;
 import org.xwiki.eventstream.Event;
 import org.xwiki.eventstream.EventStream;
 import org.xwiki.model.EntityType;
@@ -58,6 +62,8 @@ import org.xwiki.search.solr.internal.api.FieldUtils;
 import org.xwiki.search.solr.internal.api.SolrIndexer;
 import org.xwiki.security.authorization.AuthorizationManager;
 import org.xwiki.security.authorization.Right;
+import org.xwiki.user.group.GroupException;
+import org.xwiki.user.group.GroupManager;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -107,6 +113,12 @@ public class DefaultSpamCleaner implements SpamCleaner
 
     @Inject
     private ModelContext modelContext;
+
+    @Inject
+    private SpamCheckerModel model;
+
+    @Inject
+    private GroupManager groupManager;
 
     @Override
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
@@ -214,6 +226,35 @@ public class DefaultSpamCleaner implements SpamCleaner
         } catch (Exception e) {
             throw new AntiSpamException("Failed to find inactive users", e);
         }
+    }
+
+    @Override
+    public Set<DocumentReference> getKnownUserReferences() throws AntiSpamException
+    {
+        Set<DocumentReference> knownUserReferences = new HashSet<>();
+
+        // Get all users from the known user list.
+        List<String> knownUsers = this.model.getKnownUsers();
+        knownUsers.add("xwiki:XWiki.superadmin");
+        for (String authorReferenceString : knownUsers) {
+            knownUserReferences.add(this.userDocumentReferenceResolver.resolve(authorReferenceString));
+        }
+
+        // Get all users from the known group list.
+        List<String> knownGroups = this.model.getKnownGroups();
+        knownGroups.add("xwiki:XWiki.XWikiAdminGroup");
+        for (String groupReferenceString : knownGroups) {
+            // Find all users from that group
+            DocumentReference groupReference = this.userDocumentReferenceResolver.resolve(groupReferenceString);
+            try {
+                knownUserReferences.addAll(this.groupManager.getMembers(groupReference, true));
+            } catch (GroupException e) {
+                throw new AntiSpamException(
+                    String.format("Failure to get users from group [%s]", groupReferenceString), e);
+            }
+        }
+
+        return knownUserReferences;
     }
 
     private List<DocumentReference> getAuthorsWithActivity(List<DocumentReference> authorReferences, int count)

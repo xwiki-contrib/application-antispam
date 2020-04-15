@@ -28,9 +28,13 @@ import org.xwiki.model.reference.DocumentReference;
 @Role
 public interface SpamCheckerModel
 {
-    List<String> getSpamAddresses() throws AntiSpamException;
+    List<String> getSpamAddresses();
 
-    List<String> getSpamKeywords() throws AntiSpamException;
+    List<String> getSpamKeywords();
+
+    List<String> getKnownUsers();
+
+    List<String> getKnownGroups();
 
     void logSpamAddress(String ip) throws AntiSpamException;
 
