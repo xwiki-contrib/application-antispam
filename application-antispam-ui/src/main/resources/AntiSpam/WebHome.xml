@@ -107,12 +107,20 @@
 ## ---------------------------------------------------------
 ## Displays an EventStream with checkboxes to remove entries
 ## ---------------------------------------------------------
-#macro(displayEventStream $query)
+#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages)
   ## Note: Requires Programming Rights
   #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
   #set ($events = $eventStream.searchEvents($query))
   {{html wiki='true'}}
   &lt;form id="events" class="xform"&gt;
+    #if ($filterFeature)
+      &lt;div&gt;
+        &lt;input type="checkbox" id="filterKnownUsers" name="filterKnownUsers" #if ($filterKnownUsers)checked#end/&gt;
+        &lt;label for="filterKnownUsers"&gt;Filter Known Users&lt;/label&gt;
+        &lt;input type="checkbox" id="filterUserPages" name="filterUserPages" #if ($filterUserPages)checked#end/&gt;
+        &lt;label for="filterUserPages"&gt;Filter User Pages&lt;/label&gt;
+      &lt;/div&gt;
+    #end
     #foreach ($event in $events)
       #displayEvent($event, false, true)
     #end
@@ -129,7 +137,6 @@
 #if ("$!request.findInactiveUsers" == 'Find Inactive Users')
   $response.sendRedirect($xwiki.getURL('AntiSpam.CleanInactiveUsers'))
 #end
-#set ($filterKnownUsers = $request.filterKnownUsers == 'Filter Known Users')
 
 {{html}}
 &lt;form id="search" class="xform"&gt;
@@ -152,19 +159,6 @@
       &lt;input type="submit" name="confirmDelete" value="Confirm Delete" class="button btn-danger"/&gt;
     #end
   &lt;/div&gt;
-  #if ("$!request.query" == '' &amp;&amp; "$!request.user" == '')
-    #if ($filterKnownUsers)
-      &lt;div&gt;
-        &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="unfilterKnownUsers" value="UnFilter Known Users"
-          class="button"/&gt;&lt;/span&gt;
-      &lt;/div&gt;
-    #else
-      &lt;div&gt;
-        &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="filterKnownUsers" value="Filter Known Users"
-          class="button"/&gt;&lt;/span&gt;
-      &lt;/div&gt;
-    #end
-  #end
 &lt;/form&gt;
 {{/html}}
 
@@ -201,16 +195,22 @@
 ## -------------------------------------------------------------------
 ## Display documents and users matching spam keyword and users entered
 ## -------------------------------------------------------------------
-#set ($filterKnownUsers = $request.filterKnownUsers == 'Filter Known Users')
+#set ($filterKnownUsers = $request.filterKnownUsers == 'on')
+#set ($filterUserPages = $request.filterUserPages == 'on')
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
+  #if ($filterUserPages)
+    #set ($queryFragment = "and event.space &lt;&gt; 'XWiki'")
+  #else
+    #set ($queryFragment = '')
+  #end
   #if ($filterKnownUsers)
-    #set ($query = $services.query.xwql("where event.user not in (:knownUsers) order by event.date desc"))
+    #set ($query = $services.query.xwql("where event.user not in (:knownUsers) ${queryFragment} order by event.date desc"))
     #set ($query = $query.bindValue('knownUsers', $services.antispam.knownUserReferences))
   #else
-    #set ($query = $services.query.xwql("order by event.date desc"))
+    #set ($query = $services.query.xwql("where 1=1 ${queryFragment} order by event.date desc"))
   #end
-  #displayEventStream($query.setLimit(50))
+  #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages)
 #end
 ## Starting with XWiki 11.x (don't recall the exact version, $collectionstool was deprecated/removed).
 ## Let's support all versions of XWiki.
@@ -285,7 +285,7 @@
     #set ($query = $services.query.xwql("where event.user = :user order by event.date desc"))
     #set ($query = $query.bindValue('user', $userAsString).setLimit(500))
     #if (!$isCleaningInProgress)
-      #displayEventStream($query)
+      #displayEventStream($query, false, false, false)
     #else
       ## Note: Requires Programming Rights
       #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
@@ -318,4 +318,114 @@
   #end
 #end
 {{/velocity}}</content>
+  <object>
+    <name>AntiSpam.WebHome</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>9d21ef2b-c5be-426c-8485-658466d369fa</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>require(['jquery'], function($) {
+  $('#filterKnownUsers').change(function() {
+    //$('#filterKnownUsers').toggle(this.checked);
+    $('#events').submit();
+  })
+  $('#filterUserPages').change(function() {
+    //$('#filterUserPages').toggle(this.checked);
+    $('#events').submit();
+  })
+});
+
+</code>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse>0</parse>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
 </xwikidoc>
