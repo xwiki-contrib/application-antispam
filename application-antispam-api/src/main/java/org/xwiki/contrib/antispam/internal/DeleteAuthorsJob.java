@@ -78,7 +78,7 @@ public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJo
             // Protection. If the user has Admin rights at the level of the wiki, then don't remove it!
             List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
             for (DocumentReference authorReference : authorReferences) {
-                if (!this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
+                if (this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
                     this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI)))
                 {
                     this.progressManager.startStep(this);
@@ -86,6 +86,7 @@ public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJo
                         this.logger.info("Filtering out user [{}] since it has Admin rights on the wiki...",
                             authorReference);
                     }
+                } else {
                     filteredAuthorReferences.add(authorReference);
                 }
             }
