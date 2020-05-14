@@ -31,7 +31,7 @@
   <name>AntiSpam Tools - Simple Spam Checker</name>
   <description>Checks for spam using banned keywords and IP addresses</description>
   <properties>
-    <xwiki.jacoco.instructionRatio>0.07</xwiki.jacoco.instructionRatio>
+    <xwiki.jacoco.instructionRatio>0.04</xwiki.jacoco.instructionRatio>
     <xwiki.extension.category>api</xwiki.extension.category>
   </properties>
   <dependencies>
