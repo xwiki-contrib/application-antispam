@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.4" reference="AntiSpam.WebHome" locale="">
+<xwikidoc version="1.3" reference="AntiSpam.WebHome" locale="">
   <web>AntiSpam</web>
   <name>WebHome</name>
   <language/>
@@ -111,6 +111,7 @@
   ## Note: Requires Programming Rights
   #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
   #set ($events = $eventStream.searchEvents($query))
+
   {{html wiki='true'}}
   &lt;form id="events" class="xform"&gt;
     #if ($filterFeature)
@@ -130,6 +131,94 @@
     &lt;/div&gt;
   &lt;/form&gt;
   {{/html}}
+
+#end
+## ---------------------------------------------------------
+## Display/Clean passed authors, pages from them + events
+## ---------------------------------------------------------
+#macro(displayAndClean $lastAuthorReferences $isCleaningInProgress)
+  == Authors ==
+  #set ($validAuthorReferences = [])
+  #set ($adminAuthorReferences = [])
+  ## Remove non-existing author pages (they could have been removed already)
+  #foreach ($lastAuthorReference in $lastAuthorReferences)
+    #if ($xwiki.exists($lastAuthorReference))
+      #set ($discard = $validAuthorReferences.add($lastAuthorReference))
+    #end
+  #end
+  #foreach ($validAuthorReference in $validAuthorReferences)
+    #if ($services.security.authorization.hasAccess('ADMIN', $validAuthorReference, $doc.documentReference))
+      * {{{$validAuthorReference}}} {{error}}Excluding for safety since it has Admin access to this page{{/error}}
+      #set ($discard = $adminAuthorReferences.add($validAuthorReference))
+    #else
+      #if ($isCleaningInProgress)
+        * {{{$validAuthorReference}}}
+        #if (!$cleanedReferences.contains($validAuthorReference))
+          #set ($userDoc = $xwiki.getDocument($validAuthorReference))
+          #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
+          ## TODO: Find a way to reuse the new job to delete users.
+          ##set ($discard = $services.antispam.cleanAuthors([$validAuthorReference]))
+          #set ($discard = $cleanedReferences.add($validAuthorReference))
+          ** Deleted!
+        #else
+          ** Page already cleaned!
+        #end
+      #else
+        * [[{{{$validAuthorReference}}}&gt;&gt;$validAuthorReference]]
+      #end
+    #end
+  #end
+  #if ($validAuthorReferences.isEmpty())
+    No author
+  #end
+  ## Exclude Admin authors from the rest below since:
+  ## - We don't want to list pages modified by Admin authors
+  ## - We don't want to list events done by Admin authors
+  #set ($discard = $lastAuthorReferences.removeAll($adminAuthorReferences))
+  == Pages created or modified by those Authors ==
+  #set ($itemCounter = 0)
+  #foreach ($lastAuthorReference in $lastAuthorReferences)
+    #set ($documentReferences = $services.antispam.getDocumentsForAuthor($lastAuthorReference, 500, 0))
+    #foreach ($documentReference in $documentReferences)
+      ## Only handle pages that were not matching above as those have already been taken care of!
+      #if (!$cleanedReferences.contains($documentReference))
+        #set ($itemCounter = $itemCounter + 1)
+        #displayReference($documentReference, $lastAuthorReference, $isCleaningInProgress)
+        #if ($isCleaningInProgress)
+          #cleanDocument($documentReference, $lastAuthorReferences, true)
+          #set ($discard = $cleanedReferences.add($lastAuthorReference))
+        #end
+      #end
+    #end
+  #end
+  #if ($itemCounter == 0)
+    No pages
+  #end
+  == Events ==
+  #foreach ($lastAuthorReference in $lastAuthorReferences)
+    Events for user: {{{$lastAuthorReference}}}
+    #set ($isAdminReference = false)
+    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
+      #set ($isAdminReference = true)
+    #end
+    #set ($userAsString = $services.model.serialize($lastAuthorReference, 'default'))
+    #set ($query = $services.query.xwql("where event.user = :user order by event.date desc"))
+    #set ($query = $query.bindValue('user', $userAsString).setLimit(500))
+    #if (!$isCleaningInProgress)
+      #displayEventStream($query, false, false, false)
+    #else
+      ## Note: Requires Programming Rights
+      #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
+      #set ($events = $eventStream.searchEvents($query))
+      #foreach ($event in $events)
+        #displayEvent($event, $isAdminReference, false)
+        #if (!$isAdminReference)
+          #set ($discard = $eventStream.deleteEvent($event))
+          ** Event deleted
+        #end
+      #end
+    #end
+  #end
 #end
 {{/velocity}}
 
@@ -233,89 +322,14 @@
       #set ($discard = $cleanedReferences.add($matchingReference.documentReference))
     #end
   #end
-  == Authors ==
-  #set ($adminAuthorReferences = [])
-  #foreach ($lastAuthorReference in $lastAuthorReferences)
-    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
-      * {{{$lastAuthorReference}}} {{error}}Excluding for safety since it has Admin access to this page{{/error}}
-      #set ($discard = $adminAuthorReferences.add($lastAuthorReference))
-    #else
-      #if ($isCleaningInProgress)
-        * {{{$lastAuthorReference}}}
-        #if (!$cleanedReferences.contains($lastAuthorReference))
-          #set ($userDoc = $xwiki.getDocument($lastAuthorReference))
-          #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
-          ## TODO: Find a way to reuse the new job to delete users.
-          ##set ($discard = $services.antispam.cleanAuthors([$lastAuthorReference]))
-          #set ($discard = $cleanedReferences.add($lastAuthorReference))
-          ** Deleted!
-        #else
-          ** Page already cleaned!
-        #end
-      #else
-        * [[{{{$lastAuthorReference}}}&gt;&gt;$lastAuthorReference]]
-      #end
-    #end
-  #end
-  ## Exclude Admin authors from the rest below since:
-  ## - We don't want to list pages modified by Admin authors
-  ## - We don't want to list events done by Admin authors
-  #set ($discard = $lastAuthorReferences.removeAll($adminAuthorReferences))
-  == Pages created or modified by those Authors ==
-  #foreach ($lastAuthorReference in $lastAuthorReferences)
-    #set ($documentReferences = $services.antispam.getDocumentsForAuthor($lastAuthorReference, 500, 0))
-    #foreach ($documentReference in $documentReferences)
-      ## Only handle pages that were not matching above as those have already been taken care of!
-      #if (!$cleanedReferences.contains($documentReference))
-        #displayReference($documentReference, $lastAuthorReference, $isCleaningInProgress)
-        #if ($isCleaningInProgress)
-          #cleanDocument($documentReference, $lastAuthorReferences, true)
-          #set ($discard = $cleanedReferences.add($lastAuthorReference))
-        #end
-      #end
-    #end
-  #end
-  == Events ==
-  #foreach ($lastAuthorReference in $lastAuthorReferences)
-    #set ($isAdminReference = false)
-    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
-      #set ($isAdminReference = true)
-    #end
-    #set ($userAsString = $services.model.serialize($lastAuthorReference, 'default'))
-    #set ($query = $services.query.xwql("where event.user = :user order by event.date desc"))
-    #set ($query = $query.bindValue('user', $userAsString).setLimit(500))
-    #if (!$isCleaningInProgress)
-      #displayEventStream($query, false, false, false)
-    #else
-      ## Note: Requires Programming Rights
-      #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
-      #set ($events = $eventStream.searchEvents($query))
-      #foreach ($event in $events)
-        #displayEvent($event, $isAdminReference, false)
-        #if (!$isAdminReference)
-          #set ($discard = $eventStream.deleteEvent($event))
-          ** Event deleted
-        #end
-      #end
-    #end
-  #end
+  #displayAndClean($lastAuthorReferences, $isCleaningInProgress)
 #end
 ## -------------------------------------------------------------------
 ## Display documents modified by user entered in search, if specified
 ## -------------------------------------------------------------------
 #if ("$!request.user" != '')
-  == Pages modified by user: [$request.user] ==
   #set ($userReference = $services.model.resolveDocument($request.user, 'user'))
-  #set ($documentReferences = $services.antispam.getDocumentsForAuthor($userReference, 500, 0))
-  #foreach ($documentReference in $documentReferences)
-    ## Only handle pages that were not matching above as those have already been taken care of!
-    #if (!$cleanedReferences.contains($documentReference))
-      #displayReference($documentReference, $userReference, $isCleaningInProgress)
-      #if ($isCleaningInProgress)
-        #cleanDocument($documentReference, [$userReference], true)
-      #end
-    #end
-  #end
+  #displayAndClean([$userReference], $isCleaningInProgress)
 #end
 {{/velocity}}</content>
   <object>
@@ -334,6 +348,7 @@
       <validationScript/>
       <cache>
         <cache>0</cache>
+        <customDisplay/>
         <defaultValue>long</defaultValue>
         <disabled>0</disabled>
         <displayType>select</displayType>
@@ -342,37 +357,51 @@
         <multiSelect>0</multiSelect>
         <name>cache</name>
         <number>5</number>
+        <picker>0</picker>
         <prettyName>Caching policy</prettyName>
         <relationalStorage>0</relationalStorage>
         <separator> </separator>
         <separators>|, </separators>
         <size>1</size>
+        <sort>none</sort>
         <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
         <values>long|short|default|forbid</values>
         <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
       </cache>
       <code>
         <contenttype>PureText</contenttype>
+        <customDisplay/>
         <disabled>0</disabled>
         <editor>PureText</editor>
         <name>code</name>
         <number>2</number>
+        <picker>0</picker>
         <prettyName>Code</prettyName>
         <rows>20</rows>
         <size>50</size>
         <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
       </code>
       <name>
+        <customDisplay/>
         <disabled>0</disabled>
         <name>name</name>
         <number>1</number>
+        <picker>0</picker>
         <prettyName>Name</prettyName>
         <size>30</size>
         <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
       </name>
       <parse>
+        <customDisplay/>
+        <defaultValue/>
         <disabled>0</disabled>
         <displayFormType>select</displayFormType>
         <displayType>yesno</displayType>
@@ -380,10 +409,13 @@
         <number>4</number>
         <prettyName>Parse content</prettyName>
         <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
       </parse>
       <use>
         <cache>0</cache>
+        <customDisplay/>
         <disabled>0</disabled>
         <displayType>select</displayType>
         <freeText>forbidden</freeText>
@@ -391,12 +423,16 @@
         <multiSelect>0</multiSelect>
         <name>use</name>
         <number>3</number>
+        <picker>0</picker>
         <prettyName>Use this extension</prettyName>
         <relationalStorage>0</relationalStorage>
         <separator> </separator>
         <separators>|, </separators>
         <size>1</size>
+        <sort>none</sort>
         <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
         <values>currentPage|onDemand|always</values>
         <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
       </use>
