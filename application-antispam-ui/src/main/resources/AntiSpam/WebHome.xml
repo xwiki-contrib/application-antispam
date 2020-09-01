@@ -107,7 +107,7 @@
 ## ---------------------------------------------------------
 ## Displays an EventStream with checkboxes to remove entries
 ## ---------------------------------------------------------
-#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages)
+#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages)
   ## Note: Requires Programming Rights
   #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
   #set ($events = $eventStream.searchEvents($query))
@@ -117,9 +117,13 @@
     #if ($filterFeature)
       &lt;div&gt;
         &lt;input type="checkbox" id="filterKnownUsers" name="filterKnownUsers" #if ($filterKnownUsers)checked#end/&gt;
-        &lt;label for="filterKnownUsers"&gt;Filter Known Users&lt;/label&gt;
+        &lt;label for="filterKnownUsers"&gt;Filter out known users&lt;/label&gt;
         &lt;input type="checkbox" id="filterUserPages" name="filterUserPages" #if ($filterUserPages)checked#end/&gt;
-        &lt;label for="filterUserPages"&gt;Filter User Pages&lt;/label&gt;
+        &lt;label for="filterUserPages"&gt;Filter out user pages&lt;/label&gt;
+        &lt;input type="checkbox" id="filterPlaygrounds" name="filterPlaygrounds" #if ($filterPlaygrounds)checked#end/&gt;
+        &lt;label for="filterPlaygrounds"&gt;Filter out playgrounds&lt;/label&gt;
+        &lt;input type="checkbox" id="filterAntispamPages" name="filterAntispamPages" #if ($filterAntispamPages)checked#end/&gt;
+        &lt;label for="filterAntispamPages"&gt;Filter out AntiSpam pages&lt;/label&gt;
       &lt;/div&gt;
     #end
     #foreach ($event in $events)
@@ -286,20 +290,37 @@
 ## -------------------------------------------------------------------
 #set ($filterKnownUsers = $request.filterKnownUsers == 'on')
 #set ($filterUserPages = $request.filterUserPages == 'on')
+#set ($filterPlaygrounds = $request.filterPlaygrounds == 'on')
+#set ($filterAntispamPages = $request.filterAntispamPages == 'on')
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
+  #set ($queryParams = {})
   #if ($filterUserPages)
     #set ($queryFragment = "and event.space &lt;&gt; 'XWiki'")
   #else
     #set ($queryFragment = '')
   #end
+  #if ($filterAntispamPages)
+    #set ($queryFragment = "and event.space &lt;&gt; 'AntiSpam' ${queryFragment}")
+  #end
+  #if ($filterPlaygrounds)
+    #set ($queryFragment = "and event.wiki &lt;&gt; 'playground' and event.wiki &lt;&gt; 'xclams' ${queryFragment}")
+  #end
+  #if ("$!request.wikis" != '')
+    #set ($queryFragment = "and event.wiki not in (:wikis) ${queryFragment}")
+    #set ($discard = $queryParams.put('wikis', $request.wikis))
+  #end
   #if ($filterKnownUsers)
     #set ($query = $services.query.xwql("where event.user not in (:knownUsers) ${queryFragment} order by event.date desc"))
-    #set ($query = $query.bindValue('knownUsers', $services.antispam.knownUserReferences))
+    #set ($discard = $queryParams.put('knownUsers', $services.antispam.knownUserReferences))
+    #set ($query = $query.bindValues($queryParams))
   #else
     #set ($query = $services.query.xwql("where 1=1 ${queryFragment} order by event.date desc"))
   #end
-  #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages)
+  #if ("$!request.offset" != '')
+    #set ($query = $query.setOffset($request.offset))
+  #end
+  #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages, $filterPlaygrounds, $filterAntispamPages)
 #end
 ## Starting with XWiki 11.x (don't recall the exact version, $collectionstool was deprecated/removed).
 ## Let's support all versions of XWiki.
@@ -443,11 +464,15 @@
     <property>
       <code>require(['jquery'], function($) {
   $('#filterKnownUsers').change(function() {
-    //$('#filterKnownUsers').toggle(this.checked);
     $('#events').submit();
   })
   $('#filterUserPages').change(function() {
-    //$('#filterUserPages').toggle(this.checked);
+    $('#events').submit();
+  })
+  $('#filterPlaygrounds').change(function() {
+    $('#events').submit();
+  })
+  $('#filterAntispamPages').change(function() {
     $('#events').submit();
   })
 });
