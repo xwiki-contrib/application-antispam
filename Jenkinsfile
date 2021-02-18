@@ -23,5 +23,7 @@ node('docker') {
         goals = 'clean deploy jacoco:report sonar:sonar'
         profiles = 'quality,integration-tests'
         sonar = true
+        // Java 11+ is required for Sonar/Sonarcloud
+        javaTool = 'java14'
     }
 }
