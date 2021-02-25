@@ -66,4 +66,18 @@
       </modules>
     </profile>
   </profiles>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- TODO: Remove once the parent pom is upgraded to 13.2RC1+ since the source is set in that version -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <source>8</source>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>
