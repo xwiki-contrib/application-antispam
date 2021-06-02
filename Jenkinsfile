@@ -24,6 +24,6 @@ node('docker') {
         profiles = 'quality,integration-tests'
         sonar = true
         // Java 11+ is required for Sonar/Sonarcloud
-        javaTool = 'java14'
+        javaTool = 'java11'
     }
 }
