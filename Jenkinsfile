@@ -25,9 +25,5 @@ node('docker') {
         sonar = true
         // Java 11+ is required for Sonar/Sonarcloud
         javaTool = 'java11'
-        // We need a Maven version < 3.8.1 since Maven blocks external HTTP repositories by default since version 3.8.1
-        // (see https://maven.apache.org/docs/3.8.1/release-notes.html). This can be removed oce the parent POM is
-        // updated to a more recent XWiki version (13.10.11+ for example).
-        mavenTool = 'Maven'
     }
 }
