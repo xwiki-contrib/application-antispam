@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
@@ -53,6 +54,7 @@ import com.xpn.xwiki.api.Document;
 
 @Component
 @Named("antispam")
+@Singleton
 public class AntiSpamScriptService implements ScriptService
 {
     @Inject

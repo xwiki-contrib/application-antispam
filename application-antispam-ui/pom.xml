@@ -68,7 +68,7 @@
     </dependency>
     <dependency>
       <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-eventstream-store</artifactId>
+      <artifactId>xwiki-platform-eventstream-store-hibernate</artifactId>
       <version>${platform.version}</version>
       <scope>runtime</scope>
     </dependency>
@@ -114,8 +114,7 @@
       <plugin>
         <groupId>org.xwiki.commons</groupId>
         <artifactId>xwiki-commons-tool-xar-plugin</artifactId>
-        <!-- TODO: Remove once we upgrade the parent pom to a more recent version -->
-        <version>11.10.3</version>
+        <version>${commons.version}</version>
         <configuration>
           <entries>
             <entry>
@@ -143,14 +142,18 @@
               <type>customizable</type>
             </entry>
             <entry>
-              <document>AntiSpam.Logs</document>
-              <type>customizable</type>
-            </entry>
-            <entry>
               <document>AntiSpam.AntiSpamConfig</document>
               <type>configuration</type>
             </entry>
           </entries>
+          <visibleTechnicalPages>
+            <visibleTechnicalPage>.*/AntiSpam/Keywords\.xml</visibleTechnicalPage>
+            <visibleTechnicalPage>.*/AntiSpam/Excludes\.xml</visibleTechnicalPage>
+            <visibleTechnicalPage>.*/AntiSpam/KnownUsers\.xml</visibleTechnicalPage>
+            <visibleTechnicalPage>.*/AntiSpam/KnownGroups\.xml</visibleTechnicalPage>
+            <visibleTechnicalPage>.*/AntiSpam/IPAddresses\.xml</visibleTechnicalPage>
+            <visibleTechnicalPage>.*/AntiSpam/DisabledUsers\.xml</visibleTechnicalPage>
+          </visibleTechnicalPages>
         </configuration>
       </plugin>
     </plugins>

@@ -61,49 +61,18 @@
       <version>${project.version}</version>
       <type>xar</type>
       <scope>runtime</scope>
-      <exclusions>
-        <!-- Exclude platform jars so that we get the recent dependencies -->
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-rendering-macro-velocity</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.rendering</groupId>
-          <artifactId>xwiki-rendering-macro-html</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.rendering</groupId>
-          <artifactId>xwiki-rendering-macro-message</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.rendering</groupId>
-          <artifactId>xwiki-rendering-macro-box</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-rendering-macro-code</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-model</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-search-solr-query</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-eventstream-store</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-component-script</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-user-api</artifactId>
-        </exclusion>
-      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-eventstream-store-hibernate</artifactId>
+      <version>${platform.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-eventstream-store-solr</artifactId>
+      <version>${platform.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.xwiki.platform</groupId>
@@ -132,30 +101,6 @@
     <dependency>
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-rendering-macro-code</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-model-api</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-search-solr-query</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-eventstream-store</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-component-script</artifactId>
       <version>${platform.version}</version>
       <scope>runtime</scope>
     </dependency>

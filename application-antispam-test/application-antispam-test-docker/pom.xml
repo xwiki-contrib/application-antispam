@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.xwiki.contrib</groupId>
     <artifactId>application-antispam-test</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.9-SNAPSHOT</version>
   </parent>
   <artifactId>application-antispam-test-docker</artifactId>
   <name>AntiSpam Functional Tests - Docker</name>
@@ -46,45 +46,6 @@
       <artifactId>application-antispam-ui</artifactId>
       <version>${project.version}</version>
       <type>xar</type>
-      <exclusions>
-        <!-- Exclude platform jars so that we get the recent dependencies -->
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-rendering-macro-velocity</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.rendering</groupId>
-          <artifactId>xwiki-rendering-macro-html</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.rendering</groupId>
-          <artifactId>xwiki-rendering-macro-message</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.rendering</groupId>
-          <artifactId>xwiki-rendering-macro-box</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-rendering-macro-code</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-model</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-search-solr-query</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-eventstream-store</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.xwiki.platform</groupId>
-          <artifactId>xwiki-platform-component-script</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.xwiki.platform</groupId>
@@ -116,7 +77,7 @@
       <version>${platform.version}</version>
       <scope>runtime</scope>
     </dependency>
-    <dependency>
+    <!--dependency>
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-model-api</artifactId>
       <version>${platform.version}</version>
@@ -139,7 +100,7 @@
       <artifactId>xwiki-platform-component-script</artifactId>
       <version>${platform.version}</version>
       <scope>runtime</scope>
-    </dependency>
+    </dependency-->
     <!-- Add Administration deps (which is optional in antispam-ui) in order to test the Admin UI -->
     <dependency>
       <groupId>org.xwiki.platform</groupId>
