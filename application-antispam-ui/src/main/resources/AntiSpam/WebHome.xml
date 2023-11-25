@@ -176,7 +176,7 @@
   ## - We don't want to list pages modified by Admin authors
   ## - We don't want to list events done by Admin authors
   == Related Pages ==
-  Pages created or modified by the listed Authors above (excluding Admin ones and authors with no profile page).
+  Pages created or last modified by the listed authors above (excluding Admin ones and authors with no profile page).
 
   #set ($itemCounter = 0)
   #foreach ($validAuthorReference in $validAuthorReferences)
