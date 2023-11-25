@@ -49,58 +49,10 @@
     </dependency>
     <dependency>
       <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-rendering-macro-velocity</artifactId>
+      <artifactId>xwiki-platform-eventstream-store-solr</artifactId>
       <version>${platform.version}</version>
       <scope>runtime</scope>
     </dependency>
-    <dependency>
-      <groupId>org.xwiki.rendering</groupId>
-      <artifactId>xwiki-rendering-macro-html</artifactId>
-      <version>${rendering.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.rendering</groupId>
-      <artifactId>xwiki-rendering-macro-message</artifactId>
-      <version>${rendering.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.rendering</groupId>
-      <artifactId>xwiki-rendering-macro-box</artifactId>
-      <version>${rendering.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-rendering-macro-code</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <!--dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-model-api</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-search-solr-query</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-eventstream-store</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xwiki.platform</groupId>
-      <artifactId>xwiki-platform-component-script</artifactId>
-      <version>${platform.version}</version>
-      <scope>runtime</scope>
-    </dependency-->
     <!-- Add Administration deps (which is optional in antispam-ui) in order to test the Admin UI -->
     <dependency>
       <groupId>org.xwiki.platform</groupId>

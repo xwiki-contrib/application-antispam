@@ -40,18 +40,10 @@
     <xwiki.checkstyle.skip>true</xwiki.checkstyle.skip>
     <xwiki.enforcer.skip>true</xwiki.enforcer.skip>
     <xwiki.enforcer.enforce-upper-bounds.skip>false</xwiki.enforcer.enforce-upper-bounds.skip>
-    <!-- Force setting properties that are in contrib parent pom since we depend on xwiki-platform -->
-    <xwiki.nexus.serverId>xwiki-staging</xwiki.nexus.serverId>
-    <xwiki.nexus.nexusUrl>http://nexus.xwiki.org/nexus/</xwiki.nexus.nexusUrl>
-    <xwiki.nexus.skipLocalStaging>false</xwiki.nexus.skipLocalStaging>
   </properties>
   <modules>
     <module>application-antispam-test-pageobjects</module>
-    <module>application-antispam-test-tests</module>
   </modules>
-  <!-- TODO: Don't run the docker tests yet since they don't work because of a problem in XWiki's provisioning that
-       fails to install SOLR modules at runtime -->
-  <!--
   <profiles>
     <profile>
       <id>docker</id>
@@ -60,23 +52,4 @@
       </modules>
     </profile>
   </profiles>
-  -->
-  <!-- TODO: Remove once we stop depending on the xwiki-platform directly and thus inherit from the antispal top level
-       pom -->
-  <build>
-    <pluginManagement>
-      <plugins>
-        <!-- TODO: Remove once the parent pom depends on XWiki Commons 13.2RC1+.
-             See http://jira.xwiki.org/browse/XCOMMONS-2150 -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <configuration>
-            <!-- Specify the version of the code so that it doesn't depend on the Java version used to build XWiki -->
-            <source>8</source>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
 </project>

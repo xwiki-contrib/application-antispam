@@ -109,8 +109,7 @@
 ## ---------------------------------------------------------
 #macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages)
   ## Note: Requires Programming Rights
-  #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
-  #set ($events = $eventStream.searchEvents($query))
+  #set ($events = $services.antispam.searchEvents($query))
 
   {{html wiki='true'}}
   &lt;form id="events" class="xform"&gt;
@@ -142,55 +141,54 @@
 ## ---------------------------------------------------------
 #macro(displayAndClean $lastAuthorReferences $isCleaningInProgress)
   == Authors ==
+  Authors of pages containing the search term.
+
   #set ($validAuthorReferences = [])
-  #set ($adminAuthorReferences = [])
-  ## Remove non-existing author pages (they could have been removed already)
   #foreach ($lastAuthorReference in $lastAuthorReferences)
-    #if ($xwiki.exists($lastAuthorReference))
-      #set ($discard = $validAuthorReferences.add($lastAuthorReference))
-    #end
-  #end
-  #foreach ($validAuthorReference in $validAuthorReferences)
-    #if ($services.security.authorization.hasAccess('ADMIN', $validAuthorReference, $doc.documentReference))
-      * {{{$validAuthorReference}}} {{error}}Excluding for safety since it has Admin access to this page{{/error}}
-      #set ($discard = $adminAuthorReferences.add($validAuthorReference))
+    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
+      * {{{$lastAuthorReference}}} {{error}}Excluded for safety since it has Admin access to this page{{/error}}
+    #elseif (!$xwiki.exists($lastAuthorReference))
+      ## Remove non-existing author pages (they could have been removed already)
+      * {{{$lastAuthorReference}}} {{error}}Excluded as the profile page doesn't exist{{/error}}
     #else
       #if ($isCleaningInProgress)
-        * {{{$validAuthorReference}}}
-        #if (!$cleanedReferences.contains($validAuthorReference))
-          #set ($userDoc = $xwiki.getDocument($validAuthorReference))
+        * {{{$lastAuthorReference}}}
+        #if (!$cleanedReferences.contains($lastAuthorReference))
+          #set ($userDoc = $xwiki.getDocument($lastAuthorReference))
           #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
           ## TODO: Find a way to reuse the new job to delete users.
-          ##set ($discard = $services.antispam.cleanAuthors([$validAuthorReference]))
-          #set ($discard = $cleanedReferences.add($validAuthorReference))
+          ##set ($discard = $services.antispam.cleanAuthors([$lastAuthorReference]))
+          #set ($discard = $cleanedReferences.add($lastAuthorReference))
           ** Deleted!
         #else
           ** Page already cleaned!
         #end
       #else
-        * [[{{{$validAuthorReference}}}&gt;&gt;$validAuthorReference]]
+        * [[{{{$lastAuthorReference}}}&gt;&gt;$lastAuthorReference]]
       #end
+      #set ($discard = $validAuthorReferences.add($lastAuthorReference))
     #end
   #end
-  #if ($validAuthorReferences.isEmpty())
-    No author
+  #if ($lastAuthorReferences.isEmpty())
+    No authors
   #end
   ## Exclude Admin authors from the rest below since:
   ## - We don't want to list pages modified by Admin authors
   ## - We don't want to list events done by Admin authors
-  #set ($discard = $lastAuthorReferences.removeAll($adminAuthorReferences))
-  == Pages created or modified by those Authors ==
+  == Related Pages ==
+  Pages created or modified by the listed Authors above (excluding Admin ones and authors with no profile page).
+
   #set ($itemCounter = 0)
-  #foreach ($lastAuthorReference in $lastAuthorReferences)
-    #set ($documentReferences = $services.antispam.getDocumentsForAuthor($lastAuthorReference, 500, 0))
+  #foreach ($validAuthorReference in $validAuthorReferences)
+    #set ($documentReferences = $services.antispam.getDocumentsForAuthor($validAuthorReference, 500, 0))
     #foreach ($documentReference in $documentReferences)
       ## Only handle pages that were not matching above as those have already been taken care of!
       #if (!$cleanedReferences.contains($documentReference))
         #set ($itemCounter = $itemCounter + 1)
-        #displayReference($documentReference, $lastAuthorReference, $isCleaningInProgress)
+        #displayReference($documentReference, $validAuthorReference, $isCleaningInProgress)
         #if ($isCleaningInProgress)
-          #cleanDocument($documentReference, $lastAuthorReferences, true)
-          #set ($discard = $cleanedReferences.add($lastAuthorReference))
+          #cleanDocument($documentReference, $validAuthorReferences, true)
+          #set ($discard = $cleanedReferences.add($validAuthorReference))
         #end
       #end
     #end
@@ -199,25 +197,30 @@
     No pages
   #end
   == Events ==
-  #foreach ($lastAuthorReference in $lastAuthorReferences)
-    Events for user: {{{$lastAuthorReference}}}
+  Events from authors listed above (excluding Admin ones and authors with no profile page).
+
+  #if ($validAuthorReferences.isEmpty())
+    No events
+  #end
+  #foreach ($validAuthorReference in $validAuthorReferences)
+    Events for user: {{{$validAuthorReference}}}
     #set ($isAdminReference = false)
-    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
+    #if ($services.security.authorization.hasAccess('ADMIN', $validAuthorReference, $doc.documentReference))
       #set ($isAdminReference = true)
     #end
-    #set ($userAsString = $services.model.serialize($lastAuthorReference, 'default'))
-    #set ($query = $services.query.xwql("where event.user = :user order by event.date desc"))
-    #set ($query = $query.bindValue('user', $userAsString).setLimit(500))
+    #set ($userAsString = $services.model.serialize($validAuthorReference, 'default'))
+    #set ($query = $services.antispam.createEventQuery())
+    #set ($query = $query.eq('user', $userAsString))
+    #set ($query = $query.addSort('date', 'DESC'))
+    #set ($query = $query.setLimit(500))    
     #if (!$isCleaningInProgress)
       #displayEventStream($query, false, false, false)
     #else
-      ## Note: Requires Programming Rights
-      #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
-      #set ($events = $eventStream.searchEvents($query))
+      #set ($events = $services.antispam.searchEvents($query))
       #foreach ($event in $events)
         #displayEvent($event, $isAdminReference, false)
         #if (!$isAdminReference)
-          #set ($discard = $eventStream.deleteEvent($event))
+          #set ($discard = $services.antispam.deleteEvent($event).get())
           ** Event deleted
         #end
       #end
@@ -274,14 +277,11 @@
 ## Delete events if asked
 ## ----------------------
 #if ("$!request.deleteEvents" == 'Delete Selected Events')
-  #set ($eventStream = $services.component.getInstance('org.xwiki.eventstream.EventStream'))
   #foreach ($parameterName in $request.parameterNames)
     #if ($parameterName.startsWith('event-'))
       ## Delete matching event
-      ## TODO: use $eventStream.getEvent($eventId) when this extensions starts depending on 12.3RC1+ (see https://jira.xwiki.org/browse/XWIKI-17198)
       #set ($eventId = $stringtool.substringAfter($parameterName, 'event-'))
-      #set ($query = $services.query.xwql("where eventId = :eventId").bindValue('eventId', $eventId))
-      #set ($discard = $eventStream.deleteEvent($eventStream.searchEvents($query).get(0)))
+      #set ($discard = $services.antispam.deleteEvent($eventId).get())
     #end
   #end
 #end
@@ -294,29 +294,25 @@
 #set ($filterAntispamPages = $request.filterAntispamPages == 'on')
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
-  #set ($queryParams = {})
+  #set ($query = $services.antispam.createEventQuery())
   #if ($filterUserPages)
-    #set ($queryFragment = "and event.space &lt;&gt; 'XWiki'")
-  #else
-    #set ($queryFragment = '')
+    #set ($query = $query.not().eq('space', 'XWiki'))
   #end
   #if ($filterAntispamPages)
-    #set ($queryFragment = "and event.space &lt;&gt; 'AntiSpam' ${queryFragment}")
+    #set ($query = $query.not().eq('space', 'AntiSpam'))
   #end
   #if ($filterPlaygrounds)
-    #set ($queryFragment = "and event.wiki &lt;&gt; 'playground' and event.wiki &lt;&gt; 'xclams' ${queryFragment}")
+    #set ($query = $query.not().eq('wiki', 'playground'))
+    #set ($query = $query.not().eq('wiki', 'xclams'))
   #end
   #if ("$!request.wikis" != '')
-    #set ($queryFragment = "and event.wiki not in (:wikis) ${queryFragment}")
-    #set ($discard = $queryParams.put('wikis', $request.wikis))
+    ## TODO: verify this works if the user passes a comma-separated list of wikis
+    #set ($query = $query.not().in('wiki', $request.wikis))
   #end
   #if ($filterKnownUsers)
-    #set ($query = $services.query.xwql("where event.user not in (:knownUsers) ${queryFragment} order by event.date desc"))
-    #set ($discard = $queryParams.put('knownUsers', $services.antispam.knownUserReferences))
-    #set ($query = $query.bindValues($queryParams))
-  #else
-    #set ($query = $services.query.xwql("where 1=1 ${queryFragment} order by event.date desc"))
+    #set ($query = $query.not().in('user', $services.antispam.knownUserReferences))
   #end
+  #set ($query = $query.addSort('date', 'DESC'))
   #if ("$!request.offset" != '')
     #set ($query = $query.setOffset($request.offset))
   #end
@@ -331,6 +327,8 @@
 #set ($isCleaningInProgress = "$!request.confirmDelete" != '')
 #if ("$!request.query" != '')
   == Matching Pages ==
+  Pages containing the search term in their last revisions.
+
   ## Note: we make sure to surround the query string by quotes to avoid users deleting unwanted pages
   ## (since searching for example for "mcafee phone" without the quotes will search for documents 
   ## containing "mcafee" OR "phone").

@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.xwiki.contrib</groupId>
     <artifactId>parent-platform</artifactId>
-    <version>12.10-1</version>
+    <version>14.10.4</version>
   </parent>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>application-antispam</artifactId>
@@ -69,13 +69,18 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- TODO: Remove once the parent pom is upgraded to 13.2RC1+ since the source is set in that version -->
+        <!-- TODO: Remove once the parent is updated to 14.10.20+ -->
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <configuration>
-            <source>8</source>
-          </configuration>
+          <groupId>fr.inria.gforge.spoon</groupId>
+          <artifactId>spoon-maven-plugin</artifactId>
+          <version>3.8.0</version>
+          <dependencies>
+            <dependency>
+              <groupId>fr.inria.gforge.spoon</groupId>
+              <artifactId>spoon-core</artifactId>
+              <version>10.4.2</version>
+            </dependency>
+          </dependencies>
         </plugin>
       </plugins>
     </pluginManagement>

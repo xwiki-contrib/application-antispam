@@ -138,7 +138,7 @@ public class AntiSpamHomePage extends ViewPage
 
     public String getMatchedRelatedPagesText()
     {
-        return getText("//h2[@id = 'HPagescreatedormodifiedbythoseAuthors']/following-sibling::ul");
+        return getText("//h2[@id = 'HRelatedPages']/following-sibling::ul");
     }
 
     public String getMatchedActivityStreamText()

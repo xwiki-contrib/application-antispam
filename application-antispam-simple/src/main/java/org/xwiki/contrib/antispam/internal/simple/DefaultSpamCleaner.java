@@ -47,7 +47,9 @@ import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.internal.AntiSpamBeginFoldEvent;
 import org.xwiki.contrib.antispam.internal.AntiSpamEndFoldEvent;
 import org.xwiki.eventstream.Event;
-import org.xwiki.eventstream.EventStream;
+import org.xwiki.eventstream.EventSearchResult;
+import org.xwiki.eventstream.EventStore;
+import org.xwiki.eventstream.query.SimpleEventQuery;
 import org.xwiki.model.EntityType;
 import org.xwiki.model.ModelContext;
 import org.xwiki.model.reference.DocumentReference;
@@ -109,7 +111,7 @@ public class DefaultSpamCleaner implements SpamCleaner
     private AuthorizationManager authorizationManager;
 
     @Inject
-    private EventStream eventStream;
+    private EventStore eventStore;
 
     @Inject
     private ModelContext modelContext;
@@ -263,17 +265,15 @@ public class DefaultSpamCleaner implements SpamCleaner
         List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
         int counter = 0;
         for (DocumentReference authorReference : authorReferences) {
-            // Does the user have done at least one change in the whole wiki or wiki farm?
-            // Note: if XWiki is configured to have a single event stream store then it searches in the full farm.
-            // Otherwise it searches only in the current wiki.
-            Query query = this.queryManager.createQuery("where event.user = :user", Query.XWQL);
-            query.bindValue("user", this.entityReferenceSerializer.serialize(authorReference));
-            query.setLimit(1);
-            List<Event> events = this.eventStream.searchEvents(query);
-            if (events.isEmpty()) {
-                if (!isImportantAuthor(authorReference, null)) {
-                    filteredAuthorReferences.add(authorReference);
-                    counter++;
+            // Has the author done at least one change in the whole wiki or wiki farm?
+            SimpleEventQuery query = new SimpleEventQuery(0, 1);
+            query.eq(Event.FIELD_USER, this.entityReferenceSerializer.serialize(authorReference));
+            try (EventSearchResult result = this.eventStore.search(query)) {
+                if (result.getTotalHits() == 0) {
+                    if (!isImportantAuthor(authorReference, null)) {
+                        filteredAuthorReferences.add(authorReference);
+                        counter++;
+                    }
                 }
             }
             if (counter == count) {
