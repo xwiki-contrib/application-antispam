@@ -203,7 +203,7 @@
     No events
   #end
   #foreach ($validAuthorReference in $validAuthorReferences)
-    Events for user: {{{$validAuthorReference}}}
+    Events for user: [[{{{$validAuthorReference}}}>>$validAuthorReference]]
     #set ($isAdminReference = false)
     #if ($services.security.authorization.hasAccess('ADMIN', $validAuthorReference, $doc.documentReference))
       #set ($isAdminReference = true)
