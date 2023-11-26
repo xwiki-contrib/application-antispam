@@ -57,8 +57,8 @@
     #else
       #set ($outputMarkup = "[[{{{$documentReference}}}&gt;&gt;$documentReference]]")
     #end
-    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $documentReference))
-      #set ($outputMarkup = "${outputMarkup} {{error}}This change was made by [$lastAuthorReference] and won't be removed since it's an Admin!{{/error}}")
+    #if ($services.antispam.isProtectedUser($lastAuthorReference, $documentReference))
+      #set ($outputMarkup = "${outputMarkup} {{error}}This change was made by [$lastAuthorReference] and won't be removed since it's a protected user!{{/error}}")
     #end
     * $outputMarkup
   #end
@@ -78,7 +78,7 @@
 ## -----------------------------
 ## Displays an EventStream event
 ## -----------------------------
-#macro(displayEvent $event $isAdminReference $isForm)
+#macro(displayEvent $event $isProtectedUser $isForm)
   #if ($xwiki.exists($event.document))
     #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
     #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
@@ -92,7 +92,7 @@
     #set ($userText = "$event.user")
   #end
   #set ($outputMarkup = "{{{$event.date}}} - ${userText} - ${documentText} - {{{$event.type}}}")
-  #if ($isAdminReference)
+  #if ($isProtectedUser)
     #set ($outputMarkup = "${outputMarkup} {{error}}Event won't be removed since it's been made by an Admin{{/error}}")
   #end
   #if ($isForm)
@@ -145,8 +145,8 @@
 
   #set ($validAuthorReferences = [])
   #foreach ($lastAuthorReference in $lastAuthorReferences)
-    #if ($services.security.authorization.hasAccess('ADMIN', $lastAuthorReference, $doc.documentReference))
-      * {{{$lastAuthorReference}}} {{error}}Excluded for safety since it has Admin access to this page{{/error}}
+    #if ($services.antispam.isProtectedUser($lastAuthorReference, $doc.documentReference))
+      * {{{$lastAuthorReference}}} {{error}}Excluded for safety since the user has protected access to the page{{/error}}
     #elseif (!$xwiki.exists($lastAuthorReference))
       ## Remove non-existing author pages (they could have been removed already)
       * {{{$lastAuthorReference}}} {{error}}Excluded as the profile page doesn't exist{{/error}}
@@ -204,10 +204,7 @@
   #end
   #foreach ($validAuthorReference in $validAuthorReferences)
     Events for user: [[{{{$validAuthorReference}}}>>$validAuthorReference]]
-    #set ($isAdminReference = false)
-    #if ($services.security.authorization.hasAccess('ADMIN', $validAuthorReference, $doc.documentReference))
-      #set ($isAdminReference = true)
-    #end
+    #set ($isProtectedUser = $services.antispam.isProtectedUser($validAuthorReference, $doc.documentReference))
     #set ($userAsString = $services.model.serialize($validAuthorReference, 'default'))
     #set ($query = $services.antispam.createEventQuery())
     #set ($query = $query.eq('user', $userAsString))
@@ -218,8 +215,8 @@
     #else
       #set ($events = $services.antispam.searchEvents($query))
       #foreach ($event in $events)
-        #displayEvent($event, $isAdminReference, false)
-        #if (!$isAdminReference)
+        #displayEvent($event, $isProtectedUser, false)
+        #if (!$isProtectedUser)
           #set ($discard = $services.antispam.deleteEvent($event).get())
           ** Event deleted
         #end

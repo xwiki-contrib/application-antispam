@@ -286,8 +286,8 @@ class AntiSpamIT
         assertTrue(home.getMatchedPagesText().contains(spamXObjectReference.toString()));
         assertTrue(home.getMatchedPagesText().contains(spamInContentReference.toString()));
         // Verify the Matched Authors
-        assertEquals("xwiki:XWiki.spamuser\nxwiki:XWiki.superadmin Excluded for safety since it has Admin access to"
-            +" this page", home.getMatchedAuthorsText());
+        assertEquals("xwiki:XWiki.spamuser\nxwiki:XWiki.superadmin Excluded for safety since the user has protected "
+            + "access to the page", home.getMatchedAuthorsText());
         // Verify the Matched Related Pages
         assertEquals("xwiki:XWiki.spamuser\n"
             + spamInTitleReference + "\n"
@@ -318,9 +318,9 @@ class AntiSpamIT
         // Click Search again to ensure everything's been deleted
         home = AntiSpamHomePage.gotoPage();
         home = home.searchSpam("hotline");
-        assertEquals(spamInContentReference + " This change was made by [xwiki:XWiki.superadmin] and won't be"
-            + " removed since it's an Admin!", home.getMatchedPagesText());
-        assertEquals("xwiki:XWiki.superadmin Excluded for safety since it has Admin access to this page",
+        assertEquals(spamInContentReference + " This change was made by [xwiki:XWiki.superadmin] and won't be removed"
+            + " since it's a protected user!", home.getMatchedPagesText());
+        assertEquals("xwiki:XWiki.superadmin Excluded for safety since the user has protected access to the page",
             home.getMatchedAuthorsText());
         assertNull(home.getMatchedRelatedPagesText());
         assertNull(home.getMatchedActivityStreamText());

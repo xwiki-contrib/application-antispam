@@ -29,13 +29,10 @@ import javax.inject.Provider;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.antispam.AntiSpamException;
+import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.job.AbstractJob;
 import org.xwiki.job.DefaultJobStatus;
-import org.xwiki.model.EntityType;
-import org.xwiki.model.ModelContext;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.security.authorization.AuthorizationManager;
-import org.xwiki.security.authorization.Right;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -53,13 +50,10 @@ public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJo
     public static final String TYPE = "cleanAuthors";
 
     @Inject
-    private AuthorizationManager authorizationManager;
-
-    @Inject
-    private ModelContext modelContext;
-
-    @Inject
     private Provider<XWikiContext> contextProvider;
+
+    @Inject
+    private SpamCheckerProtectionManager protectionManager;
 
     @Override
     public String getType()
@@ -75,16 +69,13 @@ public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJo
         this.progressManager.pushLevelProgress(authorReferences.size(), this);
 
         try {
-            // Protection. If the user has Admin rights at the level of the wiki, then don't remove it!
+            // Don't remove protected users!
             List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
             for (DocumentReference authorReference : authorReferences) {
-                if (this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
-                    this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI)))
-                {
+                if (this.protectionManager.isProtectedUser(authorReference, null)) {
                     this.progressManager.startStep(this);
-                    if (request.isVerbose()) {
-                        this.logger.info("Filtering out user [{}] since it has Admin rights on the wiki...",
-                            authorReference);
+                    if (this.request.isVerbose()) {
+                        this.logger.info("Filtering out user [{}] since it's a protected user.", authorReference);
                     }
                 } else {
                     filteredAuthorReferences.add(authorReference);
@@ -94,7 +85,7 @@ public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJo
             clean(() -> {
                 XWikiContext xcontext = this.contextProvider.get();
                 XWiki xwiki = xcontext.getWiki();
-                if (request.isVerbose()) {
+                if (this.request.isVerbose()) {
                     this.logger.info("Starting removal of [{}] inactive users...", filteredAuthorReferences.size());
                 }
                 for (DocumentReference authorReference : filteredAuthorReferences) {

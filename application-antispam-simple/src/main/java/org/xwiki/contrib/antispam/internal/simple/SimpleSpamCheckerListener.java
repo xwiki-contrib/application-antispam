@@ -39,6 +39,7 @@ import org.xwiki.container.Container;
 import org.xwiki.container.Request;
 import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.antispam.AntiSpamException;
+import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
@@ -71,6 +72,9 @@ public class SimpleSpamCheckerListener implements EventListener
 
     @Inject
     private EntityReferenceSerializer<String> entityReferenceSerializer;
+
+    @Inject
+    private SpamCheckerProtectionManager protectionManager;
 
     @Override
     public String getName()
@@ -138,11 +142,11 @@ public class SimpleSpamCheckerListener implements EventListener
 
                 // Disable the user
                 DocumentReference currentUserReference = xcontext.getUserReference();
-                disableUser(currentUserReference, ip);
+                disableUser(currentUserReference, ip, document.getDocumentReference());
 
                 // Cancel the event
-                String message = String.format("The content of [%s] is considered to be spam",
-                    document.getDocumentReference());
+                String message = String.format("The content of [%s] is considered to be spam and save has been "
+                    + "cancalled", document.getDocumentReference());
                 if (event instanceof CancelableEvent) {
                     ((CancelableEvent) event).cancel(message);
                 } else {
@@ -154,21 +158,37 @@ public class SimpleSpamCheckerListener implements EventListener
             }
         } catch (Exception e) {
             // We failed to check if the content is spam or not, let is go through but log an error
-            logger.error("Failed to check for spam in content of [{}]", document.getDocumentReference(), e);
+            logger.error("Failed to check for spam in content of [{}]. Please verify if the content contains spam "
+                + "manually ", document.getDocumentReference(), e);
         }
     }
 
-    private void disableUser(DocumentReference userReference, String ip) throws AntiSpamException
+    /**
+     * Disable the user (so that it cannot log again) but also log it and logs its ip. Don't disable any protected user
+     * (known user, known group, admin rights user).
+     *
+     * @param userReference the reference to the user to disable
+     * @param ip the user IP address
+     * @param documentReference the reference to the document containing spam
+     * @throws AntiSpamException if there's an error disabling the user
+     */
+    private void disableUser(DocumentReference userReference, String ip, DocumentReference documentReference)
+        throws AntiSpamException
     {
-        // Disable the user
-        this.model.disableUser(userReference);
+        if (!this.protectionManager.isProtectedUser(userReference, documentReference)) {
+            // Disable the user
+            this.model.disableUser(userReference);
 
-        // Add the user to a list of disabled users because they tried adding some spam
-        this.model.logDisabledUser(userReference);
+            // Add the user to a list of disabled users because they tried adding some spam
+            this.model.logDisabledUser(userReference);
 
-        // Add the IP to the list of spammers
-        if (ip != null) {
-            this.model.logSpamAddress(ip);
+            // Add the IP to the list of spammers
+            if (ip != null) {
+                this.model.logSpamAddress(ip);
+            }
+        } else {
+            this.logger.warn("User [{}] tried to save document [{}] which contains spam. Since that user is protected,"
+                + " it has not been disabled.", userReference, documentReference);
         }
     }
 

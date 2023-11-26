@@ -35,13 +35,13 @@ import javax.inject.Singleton;
 
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
-import org.slf4j.Logger;
 import org.suigeneris.jrcs.rcs.Version;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.component.util.DefaultParameterizedType;
 import org.xwiki.contrib.antispam.MatchingReference;
+import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.internal.AntiSpamBeginFoldEvent;
@@ -50,20 +50,15 @@ import org.xwiki.eventstream.Event;
 import org.xwiki.eventstream.EventSearchResult;
 import org.xwiki.eventstream.EventStore;
 import org.xwiki.eventstream.query.SimpleEventQuery;
-import org.xwiki.model.EntityType;
-import org.xwiki.model.ModelContext;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReferenceSerializer;
-import org.xwiki.model.reference.WikiReference;
 import org.xwiki.observation.ObservationManager;
 import org.xwiki.query.Query;
 import org.xwiki.query.QueryManager;
 import org.xwiki.query.solr.internal.SolrQueryExecutor;
 import org.xwiki.search.solr.internal.api.FieldUtils;
 import org.xwiki.search.solr.internal.api.SolrIndexer;
-import org.xwiki.security.authorization.AuthorizationManager;
-import org.xwiki.security.authorization.Right;
 import org.xwiki.user.group.GroupException;
 import org.xwiki.user.group.GroupManager;
 
@@ -81,9 +76,6 @@ import com.xpn.xwiki.doc.rcs.XWikiRCSNodeInfo;
 @Singleton
 public class DefaultSpamCleaner implements SpamCleaner
 {
-    @Inject
-    private Logger logger;
-
     @Inject
     private QueryManager queryManager;
 
@@ -108,19 +100,16 @@ public class DefaultSpamCleaner implements SpamCleaner
     private ObservationManager observationManager;
 
     @Inject
-    private AuthorizationManager authorizationManager;
-
-    @Inject
     private EventStore eventStore;
-
-    @Inject
-    private ModelContext modelContext;
 
     @Inject
     private SpamCheckerModel model;
 
     @Inject
     private GroupManager groupManager;
+
+    @Inject
+    private SpamCheckerProtectionManager protectionManager;
 
     @Override
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
@@ -182,13 +171,13 @@ public class DefaultSpamCleaner implements SpamCleaner
     public void cleanDocument(DocumentReference documentReference, Collection<DocumentReference> authorReferences,
         boolean skipActivityStream) throws AntiSpamException
     {
-        // Extra safety: exclude important users (admins, etc) from the author reference list since we don't want to
+        // Extra safety: exclude protected users (admins, etc) from the author reference list since we don't want to
         // delete edits by important users by mistake. For example, it's easy for an admin to edit a document in which
         // someone had added a spam keyword (without seeing it), and then when cleaning up, the last author would be
         // associated with a content with spam and thus will have its edit removed.
         List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
         for (DocumentReference authorReference : authorReferences) {
-            if (!isImportantAuthor(authorReference, documentReference)) {
+            if (!this.protectionManager.isProtectedUser(authorReference, documentReference)) {
                 filteredAuthorReferences.add(authorReference);
             }
         }
@@ -270,7 +259,7 @@ public class DefaultSpamCleaner implements SpamCleaner
             query.eq(Event.FIELD_USER, this.entityReferenceSerializer.serialize(authorReference));
             try (EventSearchResult result = this.eventStore.search(query)) {
                 if (result.getTotalHits() == 0) {
-                    if (!isImportantAuthor(authorReference, null)) {
+                    if (!this.protectionManager.isProtectedUser(authorReference, null)) {
                         filteredAuthorReferences.add(authorReference);
                         counter++;
                     }
@@ -281,19 +270,6 @@ public class DefaultSpamCleaner implements SpamCleaner
             }
         }
         return filteredAuthorReferences;
-    }
-
-    private boolean isImportantAuthor(DocumentReference authorReference, DocumentReference documentReference)
-    {
-        WikiReference wikiReference =
-            (WikiReference) this.modelContext.getCurrentEntityReference().extractReference(EntityType.WIKI);
-        boolean isImportantAuthor = this.authorizationManager.hasAccess(Right.ADMIN, authorReference, wikiReference)
-            || this.authorizationManager.hasAccess(Right.PROGRAM, authorReference, wikiReference);
-        if (documentReference != null) {
-            isImportantAuthor = isImportantAuthor || this.authorizationManager.hasAccess(Right.ADMIN, authorReference,
-                documentReference);
-        }
-        return isImportantAuthor;
     }
 
     private List<DocumentReference> getInactiveAuthorCandidates(int elapsedDays, boolean cleanAuthorsWithAvatars)

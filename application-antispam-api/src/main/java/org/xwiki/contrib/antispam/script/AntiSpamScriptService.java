@@ -41,6 +41,7 @@ import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.internal.DeleteAuthorRequest;
@@ -89,6 +90,9 @@ public class AntiSpamScriptService implements ScriptService
 
     @Inject
     private EventStore eventStore;
+
+    @Inject
+    private SpamCheckerProtectionManager protectionManager;
 
     @Programming
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
@@ -210,6 +214,14 @@ public class AntiSpamScriptService implements ScriptService
         }
     }
 
+    /**
+     * Search for events in the Event store.
+     *
+     * @param query the query to use to search for events
+     * @return the list of matching events
+     * @throws AntiSpamException if the search fails
+     * @since 1.9
+     */
     @Programming
     public List<Event> searchEvents(EventQuery query) throws AntiSpamException
     {
@@ -225,6 +237,14 @@ public class AntiSpamScriptService implements ScriptService
         return events;
     }
 
+    /**
+     * Delete an event from the Event store.
+     *
+     * @param eventId the id of the event to delete
+     * @return a future to the deleted event
+     * @throws AntiSpamException if the deletion fails
+     * @since 1.9
+     */
     @Programming
     public CompletableFuture<Optional<Event>> deleteEvent(String eventId) throws AntiSpamException
     {
@@ -232,6 +252,14 @@ public class AntiSpamScriptService implements ScriptService
         return this.eventStore.deleteEvent(eventId);
     }
 
+    /**
+     * Delete an event from the Event store.
+     *
+     * @param event the event to delete
+     * @return a future to the deleted event
+     * @throws AntiSpamException if the deletion fails
+     * @since 1.9
+     */
     @Programming
     public CompletableFuture<Optional<Event>> deleteEvent(Event event) throws AntiSpamException
     {
@@ -239,9 +267,24 @@ public class AntiSpamScriptService implements ScriptService
         return this.eventStore.deleteEvent(event);
     }
 
+    /**
+     * @return an empty simple event query
+     * @since 1.9
+     */
     public EventQuery createEventQuery()
     {
         return new SimpleEventQuery();
+    }
+
+    /**
+     * @param authorReference the reference to the author to check
+     * @param documentReference the reference to the document on which to check if the user has Admin rights
+     * @return {@code true} if the passed user is a protected user, {@code false} otherwise
+     * @since 1.9
+     */
+    public boolean isProtectedUser(DocumentReference authorReference, DocumentReference documentReference)
+    {
+        return this.protectionManager.isProtectedUser(authorReference, documentReference);
     }
 
     private void checkForProgrammingRights() throws AntiSpamException
