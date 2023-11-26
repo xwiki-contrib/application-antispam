@@ -217,9 +217,7 @@ public class AntiSpamScriptService implements ScriptService
         List<Event> events = new ArrayList<>();
         try {
             EventSearchResult result = this.eventStore.search(query);
-            result.stream().forEach(event -> {
-                events.add(event);
-            });
+            result.stream().forEach(event -> events.add(event));
         } catch (EventStreamException e) {
             String message = String.format("Failed to search for events using query [%s]", query);
             throw new AntiSpamException(message, e);
