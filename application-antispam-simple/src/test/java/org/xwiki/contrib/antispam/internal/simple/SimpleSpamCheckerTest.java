@@ -17,7 +17,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.antispam.internal;
+package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.StringReader;
 import java.util.Arrays;
@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.xwiki.contrib.antispam.internal.simple.SimpleSpamChecker;
-import org.xwiki.contrib.antispam.internal.simple.SpamCheckerModel;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;

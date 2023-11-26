@@ -38,6 +38,7 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.container.Container;
 import org.xwiki.container.Request;
 import org.xwiki.container.servlet.ServletRequest;
+import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
@@ -137,15 +138,7 @@ public class SimpleSpamCheckerListener implements EventListener
 
                 // Disable the user
                 DocumentReference currentUserReference = xcontext.getUserReference();
-                this.model.disableUser(currentUserReference);
-
-                // Add the user to a list of disabled users because they tried adding some spam
-                this.model.logDisabledUser(currentUserReference);
-
-                // Add the IP to the list of spammers
-                if (ip != null) {
-                    this.model.logSpamAddress(ip);
-                }
+                disableUser(currentUserReference, ip);
 
                 // Cancel the event
                 String message = String.format("The content of [%s] is considered to be spam",
@@ -162,6 +155,20 @@ public class SimpleSpamCheckerListener implements EventListener
         } catch (Exception e) {
             // We failed to check if the content is spam or not, let is go through but log an error
             logger.error("Failed to check for spam in content of [{}]", document.getDocumentReference(), e);
+        }
+    }
+
+    private void disableUser(DocumentReference userReference, String ip) throws AntiSpamException
+    {
+        // Disable the user
+        this.model.disableUser(userReference);
+
+        // Add the user to a list of disabled users because they tried adding some spam
+        this.model.logDisabledUser(userReference);
+
+        // Add the IP to the list of spammers
+        if (ip != null) {
+            this.model.logSpamAddress(ip);
         }
     }
 
