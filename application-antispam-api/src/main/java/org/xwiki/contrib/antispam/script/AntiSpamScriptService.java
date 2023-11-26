@@ -221,7 +221,7 @@ public class AntiSpamScriptService implements ScriptService
                 events.add(event);
             });
         } catch (EventStreamException e) {
-            String message = String.format("Failed to search for events using query [{}]. Cons", query);
+            String message = String.format("Failed to search for events using query [%s]", query);
             throw new AntiSpamException(message, e);
         }
         return events;
