@@ -176,7 +176,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             }
         } catch (Exception e) {
             throw new AntiSpamException(String.format("Failed to log disabled spam user [%s] to [%s]",
-                authorReference, DISABLED_USERS_DOCUMENT_REFERENCE.toString()), e);
+                authorReference, DISABLED_USERS_DOCUMENT_REFERENCE), e);
         }
     }
 
@@ -189,7 +189,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             if (configObject != null) {
                 int active = configObject.getIntValue("active");
                 // By default spam checking is true, unless set to false
-                isSpamCheckingActive = active == 0 ? false : true;
+                isSpamCheckingActive = active != 0;
             } else {
                 // No xobject, we consider it's active
                 isSpamCheckingActive = true;
