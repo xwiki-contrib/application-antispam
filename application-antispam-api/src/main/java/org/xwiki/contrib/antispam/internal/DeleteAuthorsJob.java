@@ -47,6 +47,9 @@ import com.xpn.xwiki.doc.XWikiDocument;
 @Named(DeleteAuthorsJob.TYPE)
 public class DeleteAuthorsJob extends AbstractJob<DeleteAuthorRequest, DefaultJobStatus<DeleteAuthorRequest>>
 {
+    /**
+     * The job type id.
+     */
     public static final String TYPE = "cleanAuthors";
 
     @Inject

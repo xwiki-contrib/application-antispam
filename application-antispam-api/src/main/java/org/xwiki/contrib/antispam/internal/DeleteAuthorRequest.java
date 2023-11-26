@@ -35,21 +35,33 @@ public class DeleteAuthorRequest extends AbstractRequest
 
     private static final String SKIP_EVENTSTREAM_RECORDING = "skipEventStreamRecording";
 
+    /**
+     * @param authorReferences the author references to delete
+     */
     public void setAuthorReferences(List<DocumentReference> authorReferences)
     {
         setProperty(AUTHOR_REFERENCES, authorReferences);
     }
 
+    /**
+     * @return the author references to delete
+     */
     public List<DocumentReference> getAuthorReferences()
     {
         return getProperty(AUTHOR_REFERENCES);
     }
 
+    /**
+     * @param skipEventStream true to skip event stream recording
+     */
     public void setSkipEventStream(boolean skipEventStream)
     {
         setProperty(SKIP_EVENTSTREAM_RECORDING, skipEventStream);
     }
 
+    /**
+     * @return true to skip event stream recording
+     */
     public boolean skipEventStreamRecording()
     {
         return getProperty(SKIP_EVENTSTREAM_RECORDING);

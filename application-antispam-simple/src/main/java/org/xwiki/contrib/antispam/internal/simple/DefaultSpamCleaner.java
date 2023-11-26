@@ -258,11 +258,9 @@ public class DefaultSpamCleaner implements SpamCleaner
             SimpleEventQuery query = new SimpleEventQuery(0, 1);
             query.eq(Event.FIELD_USER, this.entityReferenceSerializer.serialize(authorReference));
             try (EventSearchResult result = this.eventStore.search(query)) {
-                if (result.getTotalHits() == 0) {
-                    if (!this.protectionManager.isProtectedUser(authorReference, null)) {
-                        filteredAuthorReferences.add(authorReference);
-                        counter++;
-                    }
+                if (result.getTotalHits() == 0 && !this.protectionManager.isProtectedUser(authorReference, null)) {
+                    filteredAuthorReferences.add(authorReference);
+                    counter++;
                 }
             }
             if (counter == count) {

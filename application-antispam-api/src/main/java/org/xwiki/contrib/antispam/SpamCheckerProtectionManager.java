@@ -26,6 +26,7 @@ import org.xwiki.model.reference.DocumentReference;
  * Performs verification checks for the antispam features.
  *
  * @since 1.9
+ * @version $Id$
  */
 @Role
 public interface SpamCheckerProtectionManager

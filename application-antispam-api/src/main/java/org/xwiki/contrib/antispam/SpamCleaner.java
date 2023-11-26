@@ -26,6 +26,11 @@ import java.util.Set;
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
+/**
+ * Performs cleaning of spam.
+ *
+ * @version $Id$
+ */
 @Role
 public interface SpamCleaner
 {

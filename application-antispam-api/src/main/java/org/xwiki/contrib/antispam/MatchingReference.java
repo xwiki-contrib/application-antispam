@@ -33,17 +33,28 @@ public class MatchingReference
 
     private DocumentReference lastAuthorReference;
 
+    /**
+     *
+     * @param documentReference the reference to the document containing spam
+     * @param lastAuthorReference the reference to the last author of the document
+     */
     public MatchingReference(DocumentReference documentReference, DocumentReference lastAuthorReference)
     {
         this.documentReference = documentReference;
         this.lastAuthorReference = lastAuthorReference;
     }
 
+    /**
+     * @return the reference to the document containing spam
+     */
     public DocumentReference getDocumentReference()
     {
         return this.documentReference;
     }
 
+    /**
+     * @return the reference to the last author of the document
+     */
     public DocumentReference getLastAuthorReference()
     {
         return this.lastAuthorReference;

@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.antispam.script;
 
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +65,11 @@ import org.xwiki.security.authorization.Right;
 import com.xpn.xwiki.api.Document;
 import com.xpn.xwiki.util.Programming;
 
+/**
+ * Script service for the AntiSpam application.
+ *
+ * @version $Id$
+ */
 @Component
 @Named("antispam")
 @Singleton
@@ -94,6 +100,13 @@ public class AntiSpamScriptService implements ScriptService
     @Inject
     private SpamCheckerProtectionManager protectionManager;
 
+    /**
+     * See {@link SpamCleaner#getMatchingDocuments(String, int, int)}.
+     *
+     * @param solrQueryString the solr query string to use to search for matching documents
+     * @param nb the number of matching documents to return
+     * @param offset the start position in the full list of matching documents
+     */
     @Programming
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
         throws AntiSpamException
@@ -102,6 +115,10 @@ public class AntiSpamScriptService implements ScriptService
         return this.cleaner.getMatchingDocuments(solrQueryString, nb, offset);
     }
 
+    /**
+     * @param matchingReferences the list of matching references from which to extract the document reference list
+     * @return the list of all document references extracted from the passed matching references parameter
+     */
     @Programming
     public Set<DocumentReference> getLastAuthorReferences(Collection<MatchingReference> matchingReferences)
         throws AntiSpamException
@@ -119,6 +136,14 @@ public class AntiSpamScriptService implements ScriptService
         return lastAuthorReferences;
     }
 
+    /**
+     * See {@link SpamCleaner#cleanDocument(DocumentReference, Collection, boolean)}.
+     *
+     * @param documentReference the reference to the document to clean from spam
+     * @param authorReferences the references to the authors for which to remove all changes from the document
+     * @param skipActivityStream if true then don't generate events in the Activity Stream for the changes made to
+     * @throws AntiSpamException if an error occurs
+     */
     @Programming
     public void cleanDocument(DocumentReference documentReference, Collection<DocumentReference> authorReferences,
         boolean skipActivityStream) throws AntiSpamException
@@ -135,11 +160,29 @@ public class AntiSpamScriptService implements ScriptService
         return this.cleaner.getDocumentsForAuthor(authorReference, nb, offset);
     }
 
+    /**
+     * See {@link SpamChecker#isSpam(java.io.Reader, Map)}.
+     *
+     * @param checkerHint the hint to use to find the spam checker to use
+     * @param content the content to check for spam
+     * @param parameters the parameters to pass to the spam checker
+     * @return {@code true} if the passed content is considered spam, {@code false} otherwise
+     * @throws AntiSpamException if an error occurs
+     */
     public boolean isSpam(String checkerHint, String content, Map<String, Object> parameters) throws AntiSpamException
     {
         return getSpamChecker(checkerHint).isSpam(new StringReader(content), parameters);
     }
 
+    /**
+     * See {@link SpamChecker#isSpam(Reader, Map)}.
+     *
+     * @param checkerHint the hint to use to find the spam checker to use
+     * @param document the document to check for spam
+     * @param parameters the parameters to pass to the spam checker
+     * @return {@code true} if the passed document is considered spam, {@code false} otherwise
+     * @throws AntiSpamException if an error occurs
+     */
     public boolean isSpam(String checkerHint, Document document, Map<String, Object> parameters)
         throws AntiSpamException
     {
@@ -152,6 +195,7 @@ public class AntiSpamScriptService implements ScriptService
     }
 
     /**
+     *
      * @since 1.8
      */
     @Programming
@@ -229,7 +273,7 @@ public class AntiSpamScriptService implements ScriptService
         List<Event> events = new ArrayList<>();
         try {
             EventSearchResult result = this.eventStore.search(query);
-            result.stream().forEach(event -> events.add(event));
+            result.stream().forEach(events::add);
         } catch (EventStreamException e) {
             String message = String.format("Failed to search for events using query [%s]", query);
             throw new AntiSpamException(message, e);
