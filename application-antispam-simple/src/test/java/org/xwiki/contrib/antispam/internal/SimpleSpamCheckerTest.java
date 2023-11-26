@@ -24,12 +24,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xwiki.contrib.antispam.internal.simple.SimpleSpamChecker;
 import org.xwiki.contrib.antispam.internal.simple.SpamCheckerModel;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.test.mockito.MockitoComponentMockingRule;
+import org.xwiki.test.junit5.mockito.ComponentTest;
+import org.xwiki.test.junit5.mockito.InjectMockComponents;
+import org.xwiki.test.junit5.mockito.MockComponent;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -40,19 +41,21 @@ import static org.mockito.Mockito.when;
  *
  * @version $Id$
  */
-public class SimpleSpamCheckerTest
+@ComponentTest
+class SimpleSpamCheckerTest
 {
-    @Rule
-    public MockitoComponentMockingRule<SimpleSpamChecker> mocker =
-        new MockitoComponentMockingRule<>(SimpleSpamChecker.class);
+    @InjectMockComponents
+    private SimpleSpamChecker spamChecker;
+
+    @MockComponent
+    private SpamCheckerModel model;
 
     @Test
-    public void isSpam() throws Exception
+    void isSpam() throws Exception
     {
         // Note: we test the ability to use regex symbols in the spam keywords.
         String content = "test spam1 content spammer2";
-        SpamCheckerModel model = this.mocker.getInstance(SpamCheckerModel.class);
-        when(model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "spam...2", "spam3"));
+        when(this.model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "spam...2", "spam3"));
 
         Map<String, Object> parameters = new HashMap<>();
         DocumentReference authorReference = new DocumentReference("wiki", "XWiki", "Author1");
@@ -60,9 +63,10 @@ public class SimpleSpamCheckerTest
         DocumentReference documentReference = new DocumentReference("wiki", "Space", "Page");
         parameters.put("documentReference", documentReference);
 
-        boolean isSpam = this.mocker.getComponentUnderTest().isSpam(new StringReader(content), parameters);
+        boolean isSpam = this.spamChecker.isSpam(new StringReader(content), parameters);
         assertTrue(isSpam);
 
-        verify(model).logMatchingSpamKeywords(Arrays.asList("spam1", "spammer2"), authorReference, documentReference);
+        verify(this.model).logMatchingSpamKeywords(Arrays.asList("spam1", "spammer2"), authorReference,
+            documentReference);
     }
 }
