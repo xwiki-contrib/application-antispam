@@ -51,38 +51,42 @@ import com.xpn.xwiki.objects.BaseObject;
 @Singleton
 public class DefaultSpamCheckerModel implements SpamCheckerModel
 {
+    private static final String ANTISPAM_SPACE = "AntiSpam";
+
+    private static final String MAIN_WIKI = "xwiki";
+
     private static final DocumentReference ADDRESSES_DOCUMENT_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "IPAddresses");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "IPAddresses");
 
     private static final DocumentReference KEYWORDS_DOCUMENT_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "Keywords");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "Keywords");
 
     private static final DocumentReference LOGS_DOCUMENT_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "Logs");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "Logs");
 
     private static final SpaceReference KEYWORDS_SPACE_REFERENCE =
-        new SpaceReference("AntiSpam", new WikiReference("xwiki"));
+        new SpaceReference(ANTISPAM_SPACE, new WikiReference(MAIN_WIKI));
 
     private static final DocumentReference DISABLED_USERS_DOCUMENT_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "DisabledUsers");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "DisabledUsers");
 
     private static final DocumentReference CONFIG_DOCUMENT_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "AntiSpamConfig");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "AntiSpamConfig");
 
     private static final EntityReference USER_XCLASS_REFERENCE = new EntityReference("XWikiUsers",
         EntityType.DOCUMENT, new EntityReference("XWiki", EntityType.SPACE));
 
     private static final DocumentReference CONFIG_XCLASS_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "AntiSpamConfigClass");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "AntiSpamConfigClass");
 
     private static final DocumentReference EXCLUDES_DOCUMENT_REFERENCE =
-        new DocumentReference("xwiki", "AntiSpam", "Excludes");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "Excludes");
 
     private static final DocumentReference KNOWN_USER_REFERENCES =
-        new DocumentReference("xwiki", "AntiSpam", "KnownUsers");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "KnownUsers");
 
     private static final DocumentReference KNOWN_GROUP_REFERENCES =
-        new DocumentReference("xwiki", "AntiSpam", "KnownGroups");
+        new DocumentReference(MAIN_WIKI, ANTISPAM_SPACE, "KnownGroups");
 
     @Inject
     private Logger logger;
