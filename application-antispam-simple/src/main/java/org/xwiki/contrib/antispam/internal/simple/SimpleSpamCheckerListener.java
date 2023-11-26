@@ -90,7 +90,7 @@ public class SimpleSpamCheckerListener implements EventListener
             return;
         }
 
-        // If we're already handling a document then don't check any other triggered indirectly since it's not required
+        // If we're already handling a document then don't check any other triggered indirectly since it's not required,
         // and it would generate infinite loops...
         XWikiContext xcontext = (XWikiContext) data;
         if (xcontext.containsKey(XCONTEXT_MARKER_KEY)) {
@@ -153,7 +153,7 @@ public class SimpleSpamCheckerListener implements EventListener
                 if (event instanceof CancelableEvent) {
                     ((CancelableEvent) event).cancel(message);
                 } else {
-                    // We're on a version of XWiki that doesn't support cancelling Document savinge events. Thus we
+                    // We're on a version of XWiki that doesn't support cancelling Document saving events. Thus, we
                     // throw an Error (and not an Exception since that one would be caught by the Observation Manager)
                     // to stop the save!
                     throw new Error(message);
@@ -175,9 +175,9 @@ public class SimpleSpamCheckerListener implements EventListener
             HttpServletRequest servletRequest = ((ServletRequest) request).getHttpServletRequest();
             String xffHeaderValue = servletRequest.getHeader("X-Forwarded-For");
             if (!StringUtils.isBlank(xffHeaderValue)) {
-                // The header value is a list and we need to take the right IP. Deciding which one to take depends on
+                // The header value is a list, and we need to take the right IP. Deciding which one to take depends on
                 // the setup. If XWiki is behind a proxy then the right IP to use is the last but one, otherwise, it's
-                // the last one (if XWiki is behind 2 proxies then it's the one before the last but one, etc).
+                // the last one (if XWiki is behind 2 proxies then it's the one before the last but one, etc.).
                 // Since this cannot be guessed, we've left it to the user of this extension to configure.
                 int position = this.model.getXFFHeaderIPPosition();
                 String[] ips = StringUtils.split(xffHeaderValue, ", ");
