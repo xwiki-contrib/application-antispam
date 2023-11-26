@@ -119,8 +119,8 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             // Parse the Keywords from the content, ignoring comments
             keywords = parseContentByLine(keywordsDocument.getContent());
         } catch (Exception e) {
-            this.logger.warn("Failed to get document containing spam keywords [%s]. Root reason: [{}]",
-                KEYWORDS_DOCUMENT_REFERENCE.toString(), ExceptionUtils.getRootCauseMessage(e));
+            this.logger.warn("Failed to get document containing spam keywords [{}]. Root reason: [{}]",
+                KEYWORDS_DOCUMENT_REFERENCE, ExceptionUtils.getRootCauseMessage(e));
             keywords = Collections.emptyList();
         }
         return keywords;
@@ -139,8 +139,8 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
                 getXWiki(xcontext).saveDocument(addressDocument, "Adding new spammer ip", true, xcontext);
             }
         } catch (Exception e) {
-            throw new AntiSpamException(String.format("Failed to add ip [%s]to containing spam IP addresses[%s]",
-                ip, KEYWORDS_DOCUMENT_REFERENCE.toString()), e);
+            throw new AntiSpamException(String.format("Failed to add ip [%s] to containing spam IP addresses[%s]",
+                ip, KEYWORDS_DOCUMENT_REFERENCE), e);
         }
     }
 
