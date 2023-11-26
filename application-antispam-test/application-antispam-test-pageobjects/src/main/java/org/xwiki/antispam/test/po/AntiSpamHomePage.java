@@ -116,13 +116,13 @@ public class AntiSpamHomePage extends ViewPage
 
     public AntiSpamHomePage deleteSpam()
     {
-        this.deleteSubmit.click();;
+        this.deleteSubmit.click();
         return new AntiSpamHomePage();
     }
 
     public AntiSpamHomePage confirmDeleteSpam()
     {
-        this.confirmDeleteSubmit.click();;
+        this.confirmDeleteSubmit.click();
         return new AntiSpamHomePage();
     }
 
