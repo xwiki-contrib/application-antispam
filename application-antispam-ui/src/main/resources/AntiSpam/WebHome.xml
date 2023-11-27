@@ -124,6 +124,7 @@
         &lt;input type="checkbox" id="filterAntispamPages" name="filterAntispamPages" #if ($filterAntispamPages)checked#end/&gt;
         &lt;label for="filterAntispamPages"&gt;Filter out AntiSpam pages&lt;/label&gt;
       &lt;/div&gt;
+      &lt;p/&gt;
     #end
     #foreach ($event in $events)
       #displayEvent($event, false, true)

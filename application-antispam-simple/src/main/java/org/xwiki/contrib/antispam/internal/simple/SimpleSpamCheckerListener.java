@@ -146,7 +146,7 @@ public class SimpleSpamCheckerListener implements EventListener
 
                 // Cancel the event
                 String message = String.format("The content of [%s] is considered to be spam and save has been "
-                    + "cancalled", document.getDocumentReference());
+                    + "cancelled", document.getDocumentReference());
                 if (event instanceof CancelableEvent) {
                     ((CancelableEvent) event).cancel(message);
                 } else {
