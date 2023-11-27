@@ -66,10 +66,14 @@
 ## -----------------------------------------------------
 ## Clean a document from spam and displays errors if any
 ## -----------------------------------------------------
-#macro(cleanDocument $documentReference $authorReferences)
+#macro(cleanDocument $documentReference $authorReference)
   #try()
-    #set ($discard = $services.antispam.cleanDocument($documentReference, $authorReferences, true))
-    ** Cleaned!
+    #set ($discard = $services.antispam.cleanDocument($documentReference, [$authorReference], true))
+    #if ($services.antispam.isProtectedUser($authorReference, $documentReference))
+      ** Not cleaned!
+    #else
+      ** Cleaned!
+    #end
   #end
   #if ("$!exception" != '')
     #displayException('Failed to remove spam from [${documentReference}]', $exception)
@@ -191,7 +195,7 @@
         #set ($itemCounter = $itemCounter + 1)
         #displayReference($documentReference, $validAuthorReference, $isCleaningInProgress)
         #if ($isCleaningInProgress)
-          #cleanDocument($documentReference, $validAuthorReferences, true)
+          #cleanDocument($documentReference, $validAuthorReference)
           #set ($discard = $cleanedReferences.add($validAuthorReference))
         #end
       #end
@@ -337,17 +341,17 @@
   ## (since searching for example for "mcafee phone" without the quotes will search for documents 
   ## containing "mcafee" OR "phone").
   #set ($matchingReferences = $services.antispam.getMatchingDocuments("""$request.query""", 500, 0))
-  #set ($lastAuthorReferences = $services.antispam.getLastAuthorReferences($matchingReferences))
   #foreach ($matchingReference in $matchingReferences)
     #displayReference($matchingReference.documentReference, $matchingReference.lastAuthorReference, $isCleaningInProgress)
     #if ($isCleaningInProgress)
-      #cleanDocument($matchingReference.documentReference, $lastAuthorReferences, true)
+      #cleanDocument($matchingReference.documentReference, $matchingReference.lastAuthorReference)
       #set ($discard = $cleanedReferences.add($matchingReference.documentReference))
     #end
   #end
   #if ($matchingReferences.isEmpty())
     No matching pages
   #end
+  #set ($lastAuthorReferences = $services.antispam.getLastAuthorReferences($matchingReferences))
   #displayAndClean($lastAuthorReferences, $isCleaningInProgress)
 #end
 ## -------------------------------------------------------------------
