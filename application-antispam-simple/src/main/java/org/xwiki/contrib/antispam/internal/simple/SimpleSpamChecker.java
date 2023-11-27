@@ -55,9 +55,13 @@ public class SimpleSpamChecker implements SpamChecker
     public boolean isSpam(Reader content, Map<String, Object> parameters) throws AntiSpamException
     {
         // Step 1: Check for known IP addresses of spammers. Consider that all content created by a spammer ip to
-        //             be spam.
+        //         be spam. Don't consider the guest user a spammer just based on its IP address (only consider it a
+        //         spammer if it also matches a spam keywords. This is because at startup XWiki tries to save some
+        //         documents with the guest user (e.g. a scheduler job can have its status updated), and we don't
+        //         want to prevent this from working.
+        DocumentReference authorReference = (DocumentReference) parameters.get(AUTHOR_PARAMETER);
         String ip = (String) parameters.get(IP_PARAMETER);
-        if (ip != null && this.model.getSpamAddresses().contains(ip)) {
+        if (ip != null && authorReference != null && this.model.getSpamAddresses().contains(ip)) {
             return true;
         }
 
@@ -74,7 +78,6 @@ public class SimpleSpamChecker implements SpamChecker
                     matchedKeywords.add(matcher.group());
                 }
                 if (!matchedKeywords.isEmpty()) {
-                    DocumentReference authorReference = (DocumentReference) parameters.get(AUTHOR_PARAMETER);
                     DocumentReference documentReference = (DocumentReference) parameters.get(DOCUMENT_PARAMETER);
                     if (authorReference != null && documentReference != null) {
                         this.model.logMatchingSpamKeywords(matchedKeywords, authorReference, documentReference);
