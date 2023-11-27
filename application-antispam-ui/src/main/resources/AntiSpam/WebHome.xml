@@ -129,6 +129,9 @@
     #foreach ($event in $events)
       #displayEvent($event, false, true)
     #end
+    #if ($events.isEmpty())
+      No events
+    #end
     &lt;div&gt;
       &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="deleteEvents" value="Delete Selected Events"
         class="button btn-danger"/&gt;&lt;/span&gt;
@@ -221,6 +224,9 @@
           #set ($discard = $services.antispam.deleteEvent($event).get())
           ** Event deleted
         #end
+      #end
+      #if ($events.isEmpty())
+        No events
       #end
     #end
   #end
