@@ -195,7 +195,7 @@
     #end
   #end
   #if ($itemCounter == 0)
-    No pages
+    No related pages
   #end
   == Events ==
   Events from authors listed above (excluding Admin ones and authors with no profile page).
@@ -338,6 +338,9 @@
       #cleanDocument($matchingReference.documentReference, $lastAuthorReferences, true)
       #set ($discard = $cleanedReferences.add($matchingReference.documentReference))
     #end
+  #end
+  #if ($matchingReferences.isEmpty())
+    No matching pages
   #end
   #displayAndClean($lastAuthorReferences, $isCleaningInProgress)
 #end
