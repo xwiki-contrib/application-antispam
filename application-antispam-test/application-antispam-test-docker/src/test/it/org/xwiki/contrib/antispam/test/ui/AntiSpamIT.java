@@ -215,10 +215,10 @@ class AntiSpamIT
         // Verify that the matching spam tries have been logged
         setup.loginAsSuperAdmin();
         vp = setup.gotoPage("AntiSpam", "Logs");
-        assertEquals(spamInContentReference  +" - xwiki:XWiki.spamuser - hotline\n"
-            + spamInTitleReference + " - xwiki:XWiki.spamuser - hotline now!</title>\n"
-            + spamHotlineReference + " - xwiki:XWiki.spamuser - hotline\" locale=\"\">,hotline</name>\n"
-            + spamXObjectReference + " - xwiki:XWiki.spamuser - hotline", vp.getContent());
+        assertEquals("xwiki:XWiki.spamuser - " + spamInContentReference + " - hotline\n"
+            + "xwiki:XWiki.spamuser - " + spamInTitleReference + " - hotline now!</title>\n"
+            + "xwiki:XWiki.spamuser - " + spamHotlineReference + " - hotline\" locale=\"\">,hotline</name>\n"
+            + "xwiki:XWiki.spamuser - " + spamXObjectReference + " - hotline", vp.getContent());
 
         // Verify that the spam user has been banned and the ip logged
         vp = setup.gotoPage("AntiSpam", "IPAddresses");
