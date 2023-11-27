@@ -188,7 +188,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             BaseObject configObject = getConfigOject();
             if (configObject != null) {
                 int active = configObject.getIntValue("active");
-                // By default spam checking is true, unless set to false
+                // By default, spam checking is true, unless set to false
                 isSpamCheckingActive = active != 0;
             } else {
                 // No xobject, we consider it's active
@@ -242,7 +242,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         } catch (Exception e) {
             throw new AntiSpamException(String.format(
                 "Failed to log spam keywords [%s] from user [%s] for document [%s], in document [%s]",
-                matchedKeywordsString, authorReference, documentReference, LOGS_DOCUMENT_REFERENCE.toString()), e);
+                matchedKeywordsString, authorReference, documentReference, LOGS_DOCUMENT_REFERENCE), e);
         }
     }
 
