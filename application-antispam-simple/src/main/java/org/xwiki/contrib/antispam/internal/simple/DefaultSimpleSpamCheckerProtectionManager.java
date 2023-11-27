@@ -73,10 +73,11 @@ public class DefaultSimpleSpamCheckerProtectionManager implements SpamCheckerPro
     {
         boolean isProtectedUser = false;
         try {
+            // Is the author guest (in which case we cannot disable it)?
             // Is the author a known user?
             // Is the author a member of a known group?
             // Does the author have Admin rights on the passed entity?
-            isProtectedUser = isImportantAuthor(authorReference, documentReference)
+            isProtectedUser = authorReference == null || isImportantAuthor(authorReference, documentReference)
                 || isKnownUser(authorReference)
                 || isKnownGroup(authorReference);
         } catch (GroupException e) {
