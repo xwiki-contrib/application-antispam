@@ -239,13 +239,9 @@ public class AntiSpamScriptService implements ScriptService
     /**
      * @since 1.8
      */
-    public Set<String> getKnownUserReferences() throws AntiSpamException
+    public List<DocumentReference> getKnownUserReferences() throws AntiSpamException
     {
-        Set<String> userReferencesAsString = new HashSet<>();
-        for (DocumentReference userReference : this.cleaner.getKnownUserReferences()) {
-            userReferencesAsString.add(this.entityReferenceSerializer.serialize(userReference));
-        }
-        return userReferencesAsString;
+        return new ArrayList<>(this.cleaner.getKnownUserReferences());
     }
 
     private SpamChecker getSpamChecker(String hint) throws AntiSpamException
