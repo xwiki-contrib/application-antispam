@@ -111,7 +111,7 @@
 ## ---------------------------------------------------------
 ## Displays an EventStream with checkboxes to remove entries
 ## ---------------------------------------------------------
-#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages)
+#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages $filterCreateEvents)
   ## Note: Requires Programming Rights
   #set ($events = $services.antispam.searchEvents($query))
 
@@ -127,6 +127,8 @@
         &lt;label for="filterPlaygrounds"&gt;Filter out playgrounds&lt;/label&gt;
         &lt;input type="checkbox" id="filterAntispamPages" name="filterAntispamPages" #if ($filterAntispamPages)checked#end/&gt;
         &lt;label for="filterAntispamPages"&gt;Filter out AntiSpam pages&lt;/label&gt;
+        &lt;input type="checkbox" id="filterCreateEvents" name="filterCreateEvents" #if ($filterCreateEvents)checked#end/&gt;
+        &lt;label for="filterCreateEvents"&gt;Filter out non-create events&lt;/label&gt;
       &lt;/div&gt;
       &lt;p/&gt;
     #end
@@ -211,7 +213,7 @@
     No events
   #end
   #foreach ($validAuthorReference in $validAuthorReferences)
-    Events for user: [[{{{$validAuthorReference}}}>>$validAuthorReference]]
+    Events for user: [[{{{$validAuthorReference}}}&gt;&gt;$validAuthorReference]]
     #set ($isProtectedUser = $services.antispam.isProtectedUser($validAuthorReference, $doc.documentReference))
     #set ($userAsString = $services.model.serialize($validAuthorReference, 'default'))
     #set ($query = $services.antispam.createEventQuery())
@@ -300,6 +302,7 @@
 #set ($filterUserPages = $request.filterUserPages == 'on')
 #set ($filterPlaygrounds = $request.filterPlaygrounds == 'on')
 #set ($filterAntispamPages = $request.filterAntispamPages == 'on')
+#set ($filterCreateEvents = $request.filterCreateEvents == 'on')
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
   #set ($query = $services.antispam.createEventQuery())
@@ -320,11 +323,14 @@
   #if ($filterKnownUsers)
     #set ($query = $query.not().in('user', $services.antispam.knownUserReferences))
   #end
+  #if ($filterCreateEvents)
+    #set ($query = $query.eq('type', 'create'))
+  #end
   #set ($query = $query.addSort('date', 'DESC'))
   #if ("$!request.offset" != '')
     #set ($query = $query.setOffset($request.offset))
   #end
-  #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages, $filterPlaygrounds, $filterAntispamPages)
+  #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages, $filterPlaygrounds, $filterAntispamPages, $filterCreateEvents)
 #end
 ## Starting with XWiki 11.x (don't recall the exact version, $collectionstool was deprecated/removed).
 ## Let's support all versions of XWiki.
@@ -482,6 +488,9 @@
     $('#events').submit();
   })
   $('#filterAntispamPages').change(function() {
+    $('#events').submit();
+  })
+  $('#filterCreateEvents').change(function() {
     $('#events').submit();
   })
 });
