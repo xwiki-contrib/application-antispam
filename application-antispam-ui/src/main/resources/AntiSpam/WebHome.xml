@@ -129,6 +129,8 @@
         &lt;label for="filterAntispamPages"&gt;Filter out AntiSpam pages&lt;/label&gt;
         &lt;input type="checkbox" id="filterCreateEvents" name="filterCreateEvents" #if ($filterCreateEvents)checked#end/&gt;
         &lt;label for="filterCreateEvents"&gt;Filter out non-create events&lt;/label&gt;
+        ## CSRF protection
+        &lt;input type="hidden" name="form_token" value="$!{services.csrf.getToken()}" /&gt;
       &lt;/div&gt;
       &lt;p/&gt;
     #end
@@ -248,6 +250,8 @@
 &lt;form id="search" class="xform"&gt;
   &lt;div&gt;&lt;input type="text" name="query" placeholder="Search..." value="$!request.query"/&gt;&lt;/div&gt;
   &lt;div&gt;&lt;input type="text" name="user" placeholder="User..." value="$!request.user"/&gt;&lt;/div&gt;
+  ## CSRF protection
+  &lt;input type="hidden" name="form_token" value="$!{services.csrf.getToken()}" /&gt;
   &lt;div&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="searchSpam" value="Search"
       class="button"/&gt;&lt;/span&gt;
@@ -283,10 +287,13 @@
 #end
 {{/box}}
 
+## Don't do any action if there's no valid CSRF token
+#set ($validCSRFToken = $services.csrf.isTokenValid($request.form_token))
+
 ## ----------------------
 ## Delete events if asked
 ## ----------------------
-#if ("$!request.deleteEvents" == 'Delete Selected Events')
+#if ("$!request.deleteEvents" == 'Delete Selected Events' &amp;&amp; $validCSRFToken)
   #foreach ($parameterName in $request.parameterNames)
     #if ($parameterName.startsWith('event-'))
       ## Delete matching event
@@ -332,6 +339,11 @@
   #end
   #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages, $filterPlaygrounds, $filterAntispamPages, $filterCreateEvents)
 #end
+
+#if (!$validCSRFToken)
+  #break
+#end
+
 ## Starting with XWiki 11.x (don't recall the exact version, $collectionstool was deprecated/removed).
 ## Let's support all versions of XWiki.
 #set ($cleanedReferences = $collectiontool.set)

@@ -81,12 +81,18 @@
             &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="deleteInactiveUsers"
               value="Delete Inactive Users" class="button btn-danger"/&gt;&lt;/span&gt;
           &lt;/div&gt;
+          ## CSRF protection
+          &lt;input type="hidden" name="form_token" value="$!{services.csrf.getToken()}" /&gt;
         &lt;/form&gt;
       {{/html}}
     #else
       ## Start the deletion job if there are inactive users to delete.
-      #set ($job = $services.antispam.cleanAuthors($inactiveAuthorReferences, true))
-      #displayJob($job.status)
+      ## Don't do any action if there's no valid CSRF token
+      #set ($validCSRFToken = $services.csrf.isTokenValid($request.form_token))
+      #if ($validCSRFToken)
+        #set ($job = $services.antispam.cleanAuthors($inactiveAuthorReferences, true))
+        #displayJob($job.status)
+      #end
     #end
   #end
 #end
