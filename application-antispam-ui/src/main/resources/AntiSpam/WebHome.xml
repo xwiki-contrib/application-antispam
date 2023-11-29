@@ -341,6 +341,7 @@
     ## This allows to search in the Solr Event store using SimpleEventQuery#endsWith('user', 'XWiki.superadmin').
     ## TODO: Remove once XWiki is fixed to never store a superadmin user resolved on the current wiki and the
     ## antispam app parent version has been upgraded to a version containing the fix.
+    ## See for example: https://jira.xwiki.org/browse/XWIKI-21651
     #set ($query = $query.not().endsWith('user', 'XWiki.superadmin'))
   #end
   #if ($filterCreateEvents)
