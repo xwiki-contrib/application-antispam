@@ -83,19 +83,25 @@
 ## Displays an EventStream event
 ## -----------------------------
 #macro(displayEvent $event $isProtectedUser $isForm)
-  #if ($xwiki.exists($event.document))
-    #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
-    #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
-    #set ($documentText = "[[$event.document (v${event.documentVersion})&gt;&gt;path:$viewRevURL]] ([[diff&gt;&gt;path:$diffURL]])")
-  #else
-    #set ($documentText = "$event.document (v${event.documentVersion})")
-  #end
   #if ($xwiki.exists($event.user))
     #set ($userText = "[[$event.user&gt;&gt;$event.user]]")
-  #else
+  #elseif ("$!event.user" != '')
     #set ($userText = "$event.user")
+  #else
+    #set ($userText = "Guest")
   #end
-  #set ($outputMarkup = "{{{$event.date}}} - ${userText} - ${documentText} - {{{$event.type}}}")
+  #if ("$!event.document" != '')
+    #if ($xwiki.exists($event.document))
+      #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
+      #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
+      #set ($documentText = "[[$event.document (v${event.documentVersion})&gt;&gt;path:$viewRevURL]] ([[diff&gt;&gt;path:$diffURL]])")
+    #else
+      #set ($documentText = "$event.document (v${event.documentVersion})")
+    #end
+    #set ($outputMarkup = "{{{$event.date}}} - ${userText} - ${documentText} - {{{$event.type}}}")
+  #else
+    #set ($outputMarkup = "{{{$event.date}}} - ${userText} - {{{$event.type}}}")
+  #end
   #if ($isProtectedUser)
     #set ($outputMarkup = "${outputMarkup} {{error}}Event won't be removed since it's been made by an Admin{{/error}}")
   #end
