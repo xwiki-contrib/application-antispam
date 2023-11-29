@@ -319,6 +319,8 @@
 #if (("$!request.query" == '' &amp;&amp; "$!request.user" == '') || "$!request.showas" != '')
   == Latest Changes ==
   #set ($query = $services.antispam.createEventQuery())
+  ## Only display "Pages" application events since for spam we're only interested in doc modifications
+  #set ($query = $query.eq('application', 'xwiki'))
   #if ($filterUserPages)
     #set ($query = $query.not().eq('space', 'XWiki'))
   #end
