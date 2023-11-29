@@ -335,6 +335,13 @@
   #end
   #if ($filterKnownUsers)
     #set ($query = $query.not().in('user', $services.antispam.knownUserReferences))
+    ## Use a relative reference so that we can find all superadmin users from all subwikis (there's currently a
+    ## bug in several parts of the XWiki code leading to the superadmin user being stored in the event store,
+    ## resolved on the current wiki, leading to references like "somewiki:XWiki.superadmin").
+    ## This allows to search in the Solr Event store using SimpleEventQuery#endsWith('user', 'XWiki.superadmin').
+    ## TODO: Remove once XWiki is fixed to never store a superadmin user resolved on the current wiki and the
+    ## antispam app parent version has been upgraded to a version containing the fix.
+    #set ($query = $query.not().endsWith('user', 'XWiki.superadmin'))
   #end
   #if ($filterCreateEvents)
     #set ($query = $query.eq('type', 'create'))

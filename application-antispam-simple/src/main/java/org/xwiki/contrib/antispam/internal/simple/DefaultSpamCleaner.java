@@ -87,7 +87,7 @@ public class DefaultSpamCleaner implements SpamCleaner
     private SolrIndexer solrIndexer;
 
     @Inject
-    @Named("user/current")
+    @Named("user")
     private DocumentReferenceResolver<String> userDocumentReferenceResolver;
 
     @Inject
@@ -233,10 +233,7 @@ public class DefaultSpamCleaner implements SpamCleaner
 
         // Get all users from the known group list.
         List<String> knownGroups = this.model.getKnownGroups();
-        // Main wiki admin group.
         knownGroups.add("xwiki:XWiki.XWikiAdminGroup");
-        // Current wiki admin group.
-        knownGroups.add("XWiki.XWikiAdminGroup");
         for (String groupReferenceString : knownGroups) {
             // Find all users from that group
             DocumentReference groupReference = this.userDocumentReferenceResolver.resolve(groupReferenceString);
