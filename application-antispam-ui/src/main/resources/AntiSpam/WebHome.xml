@@ -59,15 +59,15 @@
     ##   #set ($result = $services.antispam.isSpam('simple', $refDoc, {}))
     #set ($result = $services.antispam.isSpam('simple', "${refDoc.fullName}\n${refDoc.title}\n${refDoc.content}", {}))
     #if ($result.spam)
-      * (% style='color:green' %){{{$documentReference}}}
+      * (% style='color:green' %)$services.rendering.escape($documentReference, 'xwiki/2.1')
     #else
-      * (% style='color:red' %){{{$documentReference}}} {{error}}Not spam content! You may need to add keywords!{{/error}}
+      * (% style='color:red' %)$services.rendering.escape($documentReference, 'xwiki/2.1') {{error}}Not spam content! You may need to add keywords!{{/error}}
     #end
   #else
     #if ($isCleaningInProgress)
-      #set ($outputMarkup = "{{{$documentReference}}}")
+      #set ($outputMarkup = "$services.rendering.escape($documentReference, 'xwiki/2.1')")
     #else
-      #set ($outputMarkup = "[[{{{$documentReference}}}&gt;&gt;$documentReference]]")
+      #set ($outputMarkup = "[[$services.rendering.escape($documentReference, 'xwiki/2.1')&gt;&gt;$documentReference]]")
     #end
     #if ($services.antispam.isProtectedUser($lastAuthorReference, $documentReference))
       #set ($outputMarkup = "${outputMarkup} {{error}}This change was made by [$lastAuthorReference] and won't be removed since it's a protected user!{{/error}}")
@@ -103,9 +103,9 @@
     #else
       #set ($documentText = "$event.document (v${event.documentVersion})")
     #end
-    #set ($outputMarkup = "{{{$event.date}}} - #displayUser($event.user) - ${documentText} - {{{$event.type}}}")
+    #set ($outputMarkup = "$services.rendering.escape($event.date, 'xwiki/2.1') - #displayUser($event.user) - ${documentText} - $services.rendering.escape($event.type, 'xwiki/2.1')")
   #else
-    #set ($outputMarkup = "{{{$event.date}}} - #displayUser($event.user) - {{{$event.type}}}")
+    #set ($outputMarkup = "$services.rendering.escape($event.date, 'xwiki/2.1') - #displayUser($event.user) - $services.rendering.escape($event.type, 'xwiki/2.1')")
   #end
   #if ($isProtectedUser)
     #set ($outputMarkup = "${outputMarkup} {{error}}Event won't be removed since it's been made by an Admin{{/error}}")
@@ -169,14 +169,14 @@
   #set ($validAuthorReferences = [])
   #foreach ($lastAuthorReference in $lastAuthorReferences)
     #if ($services.antispam.isProtectedUser($lastAuthorReference, $doc.documentReference))
-      * {{{$lastAuthorReference}}} {{error}}Excluded for safety since the user has protected access to the page{{/error}}
+      * $services.rendering.escape($lastAuthorReference, 'xwiki/2.1') {{error}}Excluded for safety since the user has protected access to the page{{/error}}
     #elseif (!$xwiki.exists($lastAuthorReference))
       ## Remove non-existing author pages (they could have been removed already)
-      * {{{$lastAuthorReference}}} {{error}}Excluded as the profile page doesn't exist{{/error}}
+      * $services.rendering.escape($lastAuthorReference, 'xwiki/2.1') {{error}}Excluded as the profile page doesn't exist{{/error}}
       #set ($discard = $validAuthorReferences.add($lastAuthorReference))
     #else
       #if ($isCleaningInProgress)
-        * {{{$lastAuthorReference}}}
+        * $services.rendering.escape($lastAuthorReference, 'xwiki/2.1')
         #if (!$cleanedReferences.contains($lastAuthorReference))
           #set ($userDoc = $xwiki.getDocument($lastAuthorReference))
           #set ($discard = $xwiki.getXWiki().deleteAllDocuments($userDoc.getDocument(), false, $xcontext.getContext()))
@@ -188,7 +188,7 @@
           ** Page already cleaned!
         #end
       #else
-        * [[{{{$lastAuthorReference}}}&gt;&gt;$lastAuthorReference]]
+        * [[$services.rendering.escape($lastAuthorReference, 'xwiki/2.1')&gt;&gt;$lastAuthorReference]]
       #end
       #set ($discard = $validAuthorReferences.add($lastAuthorReference))
     #end
