@@ -38,7 +38,7 @@
     <xwiki.extension.namespaces>wiki:xwiki</xwiki.extension.namespaces>
     <xwiki.issueManagement.jira.id>ANTISPAM</xwiki.issueManagement.jira.id>
     <xwiki.release.jira.skip>false</xwiki.release.jira.skip>
-    <!--xwiki.checkstyle.skip>true</xwiki.checkstyle.skip-->
+    <xwiki.checkstyle.skip>true</xwiki.checkstyle.skip>
     <xwiki.revapi.skip>true</xwiki.revapi.skip>
   </properties>
   <scm>

@@ -154,7 +154,7 @@ public class AntiSpamScriptService implements ScriptService
     }
 
     @Programming
-    public List<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
+    public Set<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
         throws AntiSpamException
     {
         checkForProgrammingRights();

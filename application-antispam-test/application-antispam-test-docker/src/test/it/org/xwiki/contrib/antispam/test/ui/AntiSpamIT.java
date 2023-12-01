@@ -323,12 +323,12 @@ class AntiSpamIT
         assertEquals("xwiki:XWiki.spamuser\nxwiki:XWiki.superadmin Excluded for safety since the user has protected "
             + "access to the page", home.getMatchedAuthorsText());
         // Verify the Matched Related Pages
-        assertEquals("xwiki:XWiki.spamuser\n"
-            + spamInTitleReference + "\n"
+        assertEquals(relatedReference + "\n"
             + spamHotlineReference + "\n"
+            + spamInContentReference + "\n"
+            + spamInTitleReference + "\n"
             + spamXObjectReference + "\n"
-            + relatedReference + "\n"
-            + spamInContentReference, home.getMatchedRelatedPagesText());
+            + "xwiki:XWiki.spamuser" , home.getMatchedRelatedPagesText());
         // Verify the Matched Activity Stream
         List<String> asTexts = Arrays.asList(StringUtils.split(home.getMatchedActivityStreamText(), "\n "));
         assertTrue(asTexts.size() >= 7);

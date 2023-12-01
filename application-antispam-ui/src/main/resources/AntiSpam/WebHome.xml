@@ -173,6 +173,7 @@
     #elseif (!$xwiki.exists($lastAuthorReference))
       ## Remove non-existing author pages (they could have been removed already)
       * {{{$lastAuthorReference}}} {{error}}Excluded as the profile page doesn't exist{{/error}}
+      #set ($discard = $validAuthorReferences.add($lastAuthorReference))
     #else
       #if ($isCleaningInProgress)
         * {{{$lastAuthorReference}}}

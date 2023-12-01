@@ -64,10 +64,10 @@ public interface SpamCleaner
      *        the returned documents)
      * @param nb the number of results to return
      * @param offset the start position in the full list of results
-     * @return the list of references to documents for which the passed author was the last author
+     * @return the set of references to documents for which the passed author was the last author
      * @exception AntiSpamException if an error occurs
      */
-    List<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
+    Set<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
         throws AntiSpamException;
 
     /**

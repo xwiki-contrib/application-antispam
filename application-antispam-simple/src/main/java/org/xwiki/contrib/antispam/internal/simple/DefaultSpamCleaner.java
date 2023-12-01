@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -59,6 +60,7 @@ import org.xwiki.query.QueryManager;
 import org.xwiki.query.solr.internal.SolrQueryExecutor;
 import org.xwiki.search.solr.internal.api.FieldUtils;
 import org.xwiki.search.solr.internal.api.SolrIndexer;
+import org.xwiki.tree.Tree;
 import org.xwiki.user.group.GroupException;
 import org.xwiki.user.group.GroupManager;
 
@@ -141,10 +143,10 @@ public class DefaultSpamCleaner implements SpamCleaner
     }
 
     @Override
-    public List<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
+    public Set<DocumentReference> getDocumentsForAuthor(DocumentReference authorReference, int nb, int offset)
         throws AntiSpamException
     {
-        List<DocumentReference> references = new ArrayList<>();
+        Set<DocumentReference> references = new TreeSet<>();
 
         try {
             waitForSolrIndexing();
