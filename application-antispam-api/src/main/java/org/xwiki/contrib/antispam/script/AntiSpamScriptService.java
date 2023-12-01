@@ -43,6 +43,7 @@ import org.xwiki.component.manager.ComponentManager;
 import org.xwiki.contrib.antispam.MatchingReference;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
+import org.xwiki.contrib.antispam.SpamCheckerResult;
 import org.xwiki.contrib.antispam.SpamCleaner;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.internal.DeleteAuthorRequest;
@@ -166,10 +167,11 @@ public class AntiSpamScriptService implements ScriptService
      * @param checkerHint the hint to use to find the spam checker to use
      * @param content the content to check for spam
      * @param parameters the parameters to pass to the spam checker
-     * @return {@code true} if the passed content is considered spam, {@code false} otherwise
+     * @return the result of the check, with the details
      * @throws AntiSpamException if an error occurs
      */
-    public boolean isSpam(String checkerHint, String content, Map<String, Object> parameters) throws AntiSpamException
+    public SpamCheckerResult isSpam(String checkerHint, String content, Map<String, Object> parameters)
+        throws AntiSpamException
     {
         return getSpamChecker(checkerHint).isSpam(new StringReader(content), parameters);
     }
@@ -180,10 +182,10 @@ public class AntiSpamScriptService implements ScriptService
      * @param checkerHint the hint to use to find the spam checker to use
      * @param document the document to check for spam
      * @param parameters the parameters to pass to the spam checker
-     * @return {@code true} if the passed document is considered spam, {@code false} otherwise
+     * @return the result of the check, with the details
      * @throws AntiSpamException if an error occurs
      */
-    public boolean isSpam(String checkerHint, Document document, Map<String, Object> parameters)
+    public SpamCheckerResult isSpam(String checkerHint, Document document, Map<String, Object> parameters)
         throws AntiSpamException
     {
         try {

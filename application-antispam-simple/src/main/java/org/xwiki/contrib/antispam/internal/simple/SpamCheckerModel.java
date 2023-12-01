@@ -20,6 +20,7 @@
 package org.xwiki.contrib.antispam.internal.simple;
 
 import java.util.List;
+import java.util.Map;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.contrib.antispam.AntiSpamException;
@@ -48,6 +49,6 @@ public interface SpamCheckerModel
 
     int getXFFHeaderIPPosition();
 
-    void logMatchingSpamKeywords(List<String> matchedKeywords, DocumentReference authorReference,
+    void logMatchingSpamKeywords(Map<String, String> matchedContent, DocumentReference authorReference,
         DocumentReference documentReference) throws AntiSpamException;
 }

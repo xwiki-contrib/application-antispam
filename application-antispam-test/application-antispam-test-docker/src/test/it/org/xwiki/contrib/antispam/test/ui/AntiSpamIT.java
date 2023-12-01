@@ -116,6 +116,12 @@ class AntiSpamIT
 
         // Try creating spam pages (we should not be able to do that!) as the spam user
 
+        // Delete page that will be created by the spam user below, using the superadmin creds (the spam user doesn't
+        // have permissions to delete pages)
+        SpaceReference baseReference = testReference.getLastSpaceReference();
+        DocumentReference spamInContentReference = new DocumentReference("spam-in-content", baseReference);
+        setup.deletePage(spamInContentReference);
+
         // Create a spam user and log in
         setup.deletePage("XWiki", "spamuser");
         setup.createUserAndLogin("spamuser", "password");
@@ -128,14 +134,11 @@ class AntiSpamIT
         setup.gotoPage("AntiSpam", "WebHome");
         assertEquals("You are not allowed to view this page or perform this action.", getErrorMessage(driver));
 
-        // Create a page with some spam in its content (we put the spam content in a multiline to verify multine
+        // Create a page with some spam in its content (we put the spam content in a multiline to verify multiline
         // checking works)
-        SpaceReference baseReference = testReference.getLastSpaceReference();
-        DocumentReference spamInContentReference = new DocumentReference("spam-in-content", baseReference);
-        setup.deletePage(spamInContentReference);
         setup.createPage(spamInContentReference, "line1\ngreat hotline\nline2", "not spam");
-        assertTrue(vp.getErrorContent().contains("The content of [" + spamInContentReference
-            + "] is considered to be spam"), "Got: [" + vp.getErrorContent() + "]");
+        assertTrue(vp.getErrorContent().contains("The update of [" + spamInContentReference + "] has been cancelled "
+            + "since it contains spam."), "Got: [" + vp.getErrorContent() + "]");
 
         // Verify that the user is disabled (navigate to a page and verify it cannot be viewed)
         setup.gotoPage("Whatever", "whatever");
@@ -149,16 +152,29 @@ class AntiSpamIT
 
         // Delete the IP page for the next test as otherwise the spam checker would not even check the content!
         setup.deletePage("AntiSpam", "IPAddresses");
+
+        // Try again creating a page with spam but this time with the superadmin user, to verify the error message
+        // raised and also to verify that the IP Addresses page has not been created.
+        setup.createPage(spamInContentReference, "line1\ngreat hotline\nline2", "not spam");
+        assertTrue(vp.getErrorContent().contains("The update of [" + spamInContentReference + "] by user "
+            + "[xwiki:XWiki.superadmin] has been cancelled since it contains spam. Found spam: "
+            + "[[hotline = [...idden><NL>  <content>line1<NL>great hotline<NL>line2</content><NL></xwikidoc>...]]"),
+            "Got: [" + vp.getErrorContent() + "]");
+        assertFalse(setup.pageExists("AntiSpam", "IPAddresses"));
+
+        // Delete page that will be created by the spam user below, using the superadmin creds (the spam user doesn't
+        // have permissions to delete pages)
+        DocumentReference spamInTitleReference = new DocumentReference("spam-in-title", baseReference);
+        setup.deletePage(spamInTitleReference);
+
         // Re-create the user to continue with the test
         setup.deletePage("XWiki", "spamuser");
         setup.createUserAndLogin("spamuser", "password");
 
         // Create a page with some spam in its title
-        DocumentReference spamInTitleReference = new DocumentReference("spam-in-title", baseReference);
-        setup.deletePage(spamInTitleReference);
         setup.createPage(spamInTitleReference, "not spam", "call hotline now!");
-        assertTrue(vp.getErrorContent().contains("The content of [" + spamInTitleReference
-            + "] is considered to be spam"), "Got: [" + vp.getErrorContent() + "]");
+        assertTrue(vp.getErrorContent().contains("The update of [" + spamInTitleReference + "] has been cancelled "
+            + "since it contains spam."), "Got: [" + vp.getErrorContent() + "]");
 
         // Verify that the user is disabled (navigate to a page and verify it cannot be viewed)
         setup.gotoPage("Whatever", "whatever");
@@ -172,16 +188,20 @@ class AntiSpamIT
 
         // Delete the IP page for the next test as otherwise the spam checker would not even check the content!
         setup.deletePage("AntiSpam", "IPAddresses");
+
+        // Delete page that will be created by the spam user below, using the superadmin creds (the spam user doesn't
+        // have permissions to delete pages)
+        DocumentReference spamHotlineReference = new DocumentReference("spam-hotline", baseReference);
+        setup.deletePage(spamHotlineReference);
+
         // Re-create the user to continue with the test
         setup.deletePage("XWiki", "spamuser");
         setup.createUserAndLogin("spamuser", "password");
 
         // Create a page with some spam in the page name
-        DocumentReference spamHotlineReference = new DocumentReference("spam-hotline", baseReference);
-        setup.deletePage(spamHotlineReference);
         setup.createPage(spamHotlineReference, "not spam", "not spam");
-        assertTrue(vp.getErrorContent().contains("The content of [" + spamHotlineReference
-            + "] is considered to be spam"), "Got: [" + vp.getErrorContent() + "]");
+        assertTrue(vp.getErrorContent().contains("The update of [" + spamHotlineReference + "] has been cancelled "
+            + "since it contains spam."), "Got: [" + vp.getErrorContent() + "]");
 
         // Verify that the user is disabled (navigate to a page and verify it cannot be viewed)
         setup.gotoPage("Whatever", "whatever");
@@ -195,17 +215,21 @@ class AntiSpamIT
 
         // Delete the IP page for the next test as otherwise the spam checker would not even check the content!
         setup.deletePage("AntiSpam", "IPAddresses");
+
+        // Delete page that will be created by the spam user below, using the superadmin creds (the spam user doesn't
+        // have permissions to delete pages)
+        DocumentReference spamXObjectReference = new DocumentReference("spam-xobject", baseReference);
+        setup.deletePage(spamXObjectReference);
+
         // Re-create the user to continue with the test
         setup.deletePage("XWiki", "spamuser");
         setup.createUserAndLogin("spamuser", "password");
 
         // Create a page with some spam in a comment xobject
-        DocumentReference spamXObjectReference = new DocumentReference("spam-xobject", baseReference);
-        setup.deletePage(spamXObjectReference);
         setup.createPage(spamXObjectReference, "not spam", "not spam");
         setup.addObject(spamXObjectReference, "XWiki.XWikiComments", "comment", "line1\ngreat hotline\nline2");
-        assertTrue(vp.getErrorContent().contains("The content of [" + spamXObjectReference
-            + "] is considered to be spam"), "Got: [" + vp.getErrorContent() + "]");
+        assertTrue(vp.getErrorContent().contains("The update of [" + spamXObjectReference + "] has been cancelled "
+            + "since it contains spam."), "Got: [" + vp.getErrorContent() + "]");
 
         // Verify that the user is disabled (navigate to a page and verify it cannot be viewed)
         setup.gotoPage("Whatever", "whatever");
@@ -215,10 +239,20 @@ class AntiSpamIT
         // Verify that the matching spam tries have been logged
         setup.loginAsSuperAdmin();
         vp = setup.gotoPage("AntiSpam", "Logs");
-        assertEquals("xwiki:XWiki.spamuser - " + spamInContentReference + " - hotline\n"
-            + "xwiki:XWiki.spamuser - " + spamInTitleReference + " - hotline now!</title>\n"
-            + "xwiki:XWiki.spamuser - " + spamHotlineReference + " - hotline\" locale=\"\">,hotline</name>\n"
-            + "xwiki:XWiki.spamuser - " + spamXObjectReference + " - hotline", vp.getContent());
+        assertEquals("xwiki:XWiki.spamuser - " + spamInContentReference + " - "
+                + "hotline = [...idden><NL>  <content>line1<NL>great hotline<NL>line2</content><NL></xwikidoc>...]\n"
+            + "xwiki:XWiki.superadmin - " + spamInContentReference + " - "
+                + "hotline = [...idden><NL>  <content>line1<NL>great hotline<NL>line2</content><NL></xwikidoc>...]\n"
+            + "xwiki:XWiki.spamuser - " + spamInTitleReference + " - "
+                +  "hotline now!</title> = [...n>1.1</version><NL>  <title>call hotline now!</title><NL>  "
+                    + "<comment/><NL>  <minorEdit>fal...]\n"
+            + "xwiki:XWiki.spamuser - " + spamHotlineReference + " - "
+                + "hotline\" locale=\"\"> = [...T.verifyHomePageFeatures.spam-hotline\" locale=\"\"><NL>  "
+                    + "<web>AntiSpamIT.verifyHomeP...], hotline</name> = [...geFeatures</web><NL>  "
+                    + "<name>spam-hotline</name><NL>  <language/><NL>  <defaultLangu...]\n"
+            + "xwiki:XWiki.spamuser - " + spamXObjectReference + " - "
+                + "hotline = [...y><NL>      <comment>line1<NL>great hotline<NL>line2</comment><NL>    </propert...]",
+            vp.getContent());
 
         // Verify that the spam user has been banned and the ip logged
         vp = setup.gotoPage("AntiSpam", "IPAddresses");

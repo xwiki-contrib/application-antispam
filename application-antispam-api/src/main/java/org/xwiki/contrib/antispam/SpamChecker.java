@@ -38,8 +38,8 @@ public interface SpamChecker
      * @param content the content to check
      * @param parameters a map of parameters that depends on the implementation used. For example this can include the
      *        IP address of the submitter of the content, its email address, the date of submission, etc
-     * @return true if the content is considered spam or false otherwise
+     * @return the result of the check, with the details
      * @exception AntiSpamException if an error has prevented finding out if the passed content is spam or ham
      */
-    boolean isSpam(Reader content, Map<String, Object> parameters) throws AntiSpamException;
+    SpamCheckerResult isSpam(Reader content, Map<String, Object> parameters) throws AntiSpamException;
 }

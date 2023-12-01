@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -228,10 +230,20 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     }
 
     @Override
-    public void logMatchingSpamKeywords(List<String> matchedKeywords, DocumentReference authorReference,
+    public void logMatchingSpamKeywords(Map<String, String> matchedContent, DocumentReference authorReference,
         DocumentReference documentReference) throws AntiSpamException
     {
-        String matchedKeywordsString = StringUtils.join(matchedKeywords, ",");
+        StringBuilder builder = new StringBuilder();
+        Iterator<String> keyIterator = matchedContent.keySet().iterator();
+        while (keyIterator.hasNext()) {
+            String matchedKeyword = keyIterator.next();
+            String matchedContext = matchedContent.get(matchedKeyword);
+            builder.append(matchedKeyword).append(" = [...").append(removeNewLines(matchedContext)).append("...]");
+            if (keyIterator.hasNext()) {
+                builder.append(", ");
+            }
+        }
+        String matchedKeywordsString = builder.toString();
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument logDocument = getDocument(LOGS_DOCUMENT_REFERENCE, xcontext);
@@ -256,6 +268,11 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
     public List<String> getKnownGroups()
     {
         return getDocumentContent(KNOWN_GROUP_REFERENCES);
+    }
+
+    private String removeNewLines(String input)
+    {
+        return StringUtils.replace(input, "\n", "<NL>");
     }
 
     private List<String> getDocumentContent(DocumentReference reference)

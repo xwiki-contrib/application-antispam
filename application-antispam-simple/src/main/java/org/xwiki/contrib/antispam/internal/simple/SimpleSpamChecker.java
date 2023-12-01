@@ -20,7 +20,7 @@
 package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.Reader;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.contrib.antispam.SpamCheckerResult;
 import org.xwiki.model.reference.DocumentReference;
 
 @Component
@@ -48,11 +49,13 @@ public class SimpleSpamChecker implements SpamChecker
 
     private static final String DOCUMENT_PARAMETER = "documentReference";
 
+    private static final int CONTEXT_SIZE = 30;
+
     @Inject
     private SpamCheckerModel model;
 
     @Override
-    public boolean isSpam(Reader content, Map<String, Object> parameters) throws AntiSpamException
+    public SpamCheckerResult isSpam(Reader content, Map<String, Object> parameters) throws AntiSpamException
     {
         // Step 1: Check for known IP addresses of spammers. Consider that all content created by a spammer ip to
         //         be spam. Don't consider the guest user a spammer just based on its IP address (only consider it a
@@ -62,7 +65,7 @@ public class SimpleSpamChecker implements SpamChecker
         DocumentReference authorReference = (DocumentReference) parameters.get(AUTHOR_PARAMETER);
         String ip = (String) parameters.get(IP_PARAMETER);
         if (ip != null && authorReference != null && this.model.getSpamAddresses().contains(ip)) {
-            return true;
+            return new SpamCheckerResult(true);
         }
 
         // Step 2: Check for known spam keywords in the passed content (which should include page name and page title)
@@ -73,22 +76,36 @@ public class SimpleSpamChecker implements SpamChecker
                 String regex = StringUtils.join(keywords, '|');
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(contentAsString);
-                List<String> matchedKeywords = new ArrayList<>();
+                Map<String, String> matchedContent = new LinkedHashMap<>();
                 while (matcher.find()) {
-                    matchedKeywords.add(matcher.group());
+                    matchedContent.put(matcher.group(), extractContext(contentAsString, matcher.start(),
+                        matcher.end()));
                 }
-                if (!matchedKeywords.isEmpty()) {
+                if (!matchedContent.isEmpty()) {
                     DocumentReference documentReference = (DocumentReference) parameters.get(DOCUMENT_PARAMETER);
                     if (authorReference != null && documentReference != null) {
-                        this.model.logMatchingSpamKeywords(matchedKeywords, authorReference, documentReference);
+                        this.model.logMatchingSpamKeywords(matchedContent, authorReference, documentReference);
                     }
-                    return true;
+                    return new SpamCheckerResult(true, matchedContent);
                 }
             }
         } catch (Exception e) {
             throw new AntiSpamException("Error checking for spam keywords", e);
         }
 
-        return false;
+        return new SpamCheckerResult(false);
+    }
+
+    private String extractContext(String contentAsString, int start, int end)
+    {
+        int minStart = start - CONTEXT_SIZE;
+        if (minStart < 0) {
+            minStart = 0;
+        }
+        int maxEnd = end + CONTEXT_SIZE;
+        if (maxEnd > contentAsString.length()) {
+            maxEnd = contentAsString.length();
+        }
+        return contentAsString.substring(minStart, maxEnd);
     }
 }

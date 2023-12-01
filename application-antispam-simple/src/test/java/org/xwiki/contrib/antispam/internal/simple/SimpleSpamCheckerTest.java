@@ -25,11 +25,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.xwiki.contrib.antispam.SpamCheckerResult;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 import org.xwiki.test.junit5.mockito.MockComponent;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,7 +54,7 @@ class SimpleSpamCheckerTest
     void isSpam() throws Exception
     {
         // Note: we test the ability to use regex symbols in the spam keywords.
-        String content = "test spam1 content spammer2";
+        String content = "test spam1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx spammer2";
         when(this.model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "spam...2", "spam3"));
 
         Map<String, Object> parameters = new HashMap<>();
@@ -61,10 +63,13 @@ class SimpleSpamCheckerTest
         DocumentReference documentReference = new DocumentReference("wiki", "Space", "Page");
         parameters.put("documentReference", documentReference);
 
-        boolean isSpam = this.spamChecker.isSpam(new StringReader(content), parameters);
-        assertTrue(isSpam);
+        SpamCheckerResult result = this.spamChecker.isSpam(new StringReader(content), parameters);
 
-        verify(this.model).logMatchingSpamKeywords(Arrays.asList("spam1", "spammer2"), authorReference,
-            documentReference);
+        assertTrue(result.isSpam());
+        assertEquals(2, result.getMatchedContent().size());
+        assertEquals("test spam1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", result.getMatchedContent().get("spam1"));
+        assertEquals("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx spammer2", result.getMatchedContent().get("spammer2"));
+
+        verify(this.model).logMatchingSpamKeywords(result.getMatchedContent(), authorReference, documentReference);
     }
 }

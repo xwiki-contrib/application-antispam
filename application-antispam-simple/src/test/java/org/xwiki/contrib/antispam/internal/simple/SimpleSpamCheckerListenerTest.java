@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.xwiki.bridge.event.DocumentUpdatingEvent;
 import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.contrib.antispam.SpamCheckerResult;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.test.LogLevel;
 import org.xwiki.test.junit5.LogCaptureExtension;
@@ -84,7 +85,7 @@ class SimpleSpamCheckerListenerTest
         when(this.model.iSpamCheckingActive()).thenReturn(true);
         when(this.model.getExcludedSpaces()).thenReturn(Collections.emptyList());
 
-        when(this.checker.isSpam(any(Reader.class), any(Map.class))).thenReturn(true);
+        when(this.checker.isSpam(any(Reader.class), any(Map.class))).thenReturn(new SpamCheckerResult(true));
 
         // Simulate a protected user.
         when(this.protectionManager.isProtectedUser(any(DocumentReference.class), any(DocumentReference.class)))

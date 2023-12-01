@@ -37,6 +37,18 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
   <content>{{velocity output='false'}}
+## ---------------
+## Displays a user
+## ---------------
+#macro(displayUser $userReference)
+  #if ($xwiki.exists($userReference))
+    [[$userReference&gt;&gt;$userReference]]##
+  #elseif ("$!userReference" != '')
+    $userReference##
+  #else
+    Guest##
+  #end
+#end
 ## --------------------------------------------
 ## Displays a document reference as a list item
 ## --------------------------------------------
@@ -44,9 +56,9 @@
   #if ("$!request.check" != '')
     #set ($refDoc = $xwiki.getDocument($documentReference))
     ## Note: We should use the following instead but it's currently too time-consuming:
-    ##   #set ($isSpam = $services.antispam.isSpam('simple', $refDoc, {}))
-    #set ($isSpam = $services.antispam.isSpam('simple', "${refDoc.fullName}\n${refDoc.title}\n${refDoc.content}", {}))
-    #if ($isSpam)
+    ##   #set ($result = $services.antispam.isSpam('simple', $refDoc, {}))
+    #set ($result = $services.antispam.isSpam('simple', "${refDoc.fullName}\n${refDoc.title}\n${refDoc.content}", {}))
+    #if ($result.spam)
       * (% style='color:green' %){{{$documentReference}}}
     #else
       * (% style='color:red' %){{{$documentReference}}} {{error}}Not spam content! You may need to add keywords!{{/error}}
@@ -83,13 +95,6 @@
 ## Displays an EventStream event
 ## -----------------------------
 #macro(displayEvent $event $isProtectedUser $isForm)
-  #if ($xwiki.exists($event.user))
-    #set ($userText = "[[$event.user&gt;&gt;$event.user]]")
-  #elseif ("$!event.user" != '')
-    #set ($userText = "$event.user")
-  #else
-    #set ($userText = "Guest")
-  #end
   #if ("$!event.document" != '')
     #if ($xwiki.exists($event.document))
       #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
@@ -98,9 +103,9 @@
     #else
       #set ($documentText = "$event.document (v${event.documentVersion})")
     #end
-    #set ($outputMarkup = "{{{$event.date}}} - ${userText} - ${documentText} - {{{$event.type}}}")
+    #set ($outputMarkup = "{{{$event.date}}} - #displayUser($event.user) - ${documentText} - {{{$event.type}}}")
   #else
-    #set ($outputMarkup = "{{{$event.date}}} - ${userText} - {{{$event.type}}}")
+    #set ($outputMarkup = "{{{$event.date}}} - #displayUser($event.user) - {{{$event.type}}}")
   #end
   #if ($isProtectedUser)
     #set ($outputMarkup = "${outputMarkup} {{error}}Event won't be removed since it's been made by an Admin{{/error}}")
@@ -221,7 +226,8 @@
     No events
   #end
   #foreach ($validAuthorReference in $validAuthorReferences)
-    Events for user: [[{{{$validAuthorReference}}}&gt;&gt;$validAuthorReference]]
+    Events for user: #displayUser($validAuthorReference)
+
     #set ($isProtectedUser = $services.antispam.isProtectedUser($validAuthorReference, $doc.documentReference))
     #set ($userAsString = $services.model.serialize($validAuthorReference, 'default'))
     #set ($query = $services.antispam.createEventQuery())

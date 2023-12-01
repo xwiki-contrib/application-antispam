@@ -41,6 +41,7 @@ import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamChecker;
+import org.xwiki.contrib.antispam.SpamCheckerResult;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.observation.EventListener;
@@ -133,9 +134,9 @@ public class SimpleSpamCheckerListener implements EventListener
         try {
             // Note: we serialize the document to XML to have its full content including xobjects, xclass definition,
             // title, name, etc.
-            boolean isSpam =
+            SpamCheckerResult result =
                 this.checker.isSpam(new StringReader(document.toXML(true, false, false, false, xcontext)), parameters);
-            if (isSpam) {
+            if (result.isSpam()) {
                 // Mark that we're handling some spam so that when we save documents in the process they're not
                 // processed as spam which could lead to infinite recursions.
                 xcontext.put(XCONTEXT_MARKER_KEY, true);
@@ -145,8 +146,7 @@ public class SimpleSpamCheckerListener implements EventListener
                 disableUser(currentUserReference, ip, document.getDocumentReference());
 
                 // Cancel the event
-                String message = String.format("The content of [%s] is considered to be spam and save has been "
-                    + "cancelled", document.getDocumentReference());
+                String message = getSpamMessage(result, document.getDocumentReference(), currentUserReference);
                 if (event instanceof CancelableEvent) {
                     ((CancelableEvent) event).cancel(message);
                 } else {
@@ -161,6 +161,36 @@ public class SimpleSpamCheckerListener implements EventListener
             logger.error("Failed to check for spam in content of [{}]. Please verify if the content contains spam "
                 + "manually ", document.getDocumentReference(), e);
         }
+    }
+
+    private String getSpamMessage(SpamCheckerResult result, DocumentReference documentReference,
+        DocumentReference userReference)
+    {
+        // If the user is a protected user, display details. Otherwise, just display a generic message so that spammers
+        // won't know what triggered the spam detection.
+        String message;
+        if (this.protectionManager.isProtectedUser(userReference, documentReference)) {
+            if (result.getMatchedContent().isEmpty()) {
+                message = String.format("The update of [%s] has been cancelled since the IP for user [%s] is in the "
+                    + "list of spammer IPs.", documentReference, userReference);
+            } else {
+                StringBuilder builder = new StringBuilder();
+                for (Map.Entry<String, String> entry : result.getMatchedContent().entrySet()) {
+                    builder.append('[').append(entry.getKey()).append(" = [...")
+                        .append(removeNewLines(entry.getValue())).append("...]]");
+                }
+                message = String.format("The update of [%s] by user [%s] has been cancelled since it contains spam. "
+                    + "Found spam: [%s]", documentReference, userReference, builder);
+            }
+        } else {
+            message = String.format("The update of [%s] has been cancelled since it contains spam.", documentReference);
+        }
+        return message;
+    }
+
+    private String removeNewLines(String input)
+    {
+        return StringUtils.replace(input, "\n", "<NL>");
     }
 
     /**
