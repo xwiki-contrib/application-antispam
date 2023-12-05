@@ -60,7 +60,6 @@ import org.xwiki.query.QueryManager;
 import org.xwiki.query.solr.internal.SolrQueryExecutor;
 import org.xwiki.search.solr.internal.api.FieldUtils;
 import org.xwiki.search.solr.internal.api.SolrIndexer;
-import org.xwiki.tree.Tree;
 import org.xwiki.user.group.GroupException;
 import org.xwiki.user.group.GroupManager;
 
@@ -215,7 +214,7 @@ public class DefaultSpamCleaner implements SpamCleaner
         throws AntiSpamException
     {
         try {
-            return getAuthorsWithActivity(getInactiveAuthorCandidates(elapsedDays, cleanAuthorsWithAvatars), count);
+            return getAuthorsWithoutActivity(getInactiveAuthorCandidates(elapsedDays, cleanAuthorsWithAvatars), count);
         } catch (Exception e) {
             throw new AntiSpamException("Failed to find inactive users", e);
         }
@@ -250,15 +249,21 @@ public class DefaultSpamCleaner implements SpamCleaner
         return knownUserReferences;
     }
 
-    private List<DocumentReference> getAuthorsWithActivity(List<DocumentReference> authorReferences, int count)
+    private List<DocumentReference> getAuthorsWithoutActivity(List<DocumentReference> authorReferences, int count)
         throws Exception
     {
         List<DocumentReference> filteredAuthorReferences = new ArrayList<>();
         int counter = 0;
         for (DocumentReference authorReference : authorReferences) {
             // Has the author done at least one change in the whole wiki or wiki farm?
-            SimpleEventQuery query = new SimpleEventQuery(0, 1);
+            SimpleEventQuery query = new SimpleEventQuery(0, 10);
+            // Only look for Page events and for "create", "update", "delete" type of events. We do this to be sure we
+            // don't consider liking a document as a valid event we should count.
+            query.eq(Event.FIELD_APPLICATION, "xwiki");
+            query.in(Event.FIELD_TYPE, "create", "update", "delete");
             query.eq(Event.FIELD_USER, this.entityReferenceSerializer.serialize(authorReference));
+            // Exclude events for the user profile page since that doesn't count as valid wiki activity...
+            query.not().eq(Event.FIELD_DOCUMENT, this.entityReferenceSerializer.serialize(authorReference));
             try (EventSearchResult result = this.eventStore.search(query)) {
                 if (result.getTotalHits() == 0 && !this.protectionManager.isProtectedUser(authorReference, null)) {
                     filteredAuthorReferences.add(authorReference);
