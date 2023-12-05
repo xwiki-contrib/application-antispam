@@ -74,6 +74,7 @@ public interface SpamCleaner
      * Find all user references for the following criteria:
      * <ul>
      *   <li>The user profile page has been created more than elapsedDays ago</li>
+     *   <li>The user has done at least one document update (create, update, delete) in the wiki</li>
      *   <li>The user profile page doesn't have an avatar (if cleanAuthorsWithAvatars is false)</li>
      *   <li>The user profile page doesn't have an XObject of type XWiki.OIDC.ConsentClass. The reason for this check
      *     is because we can have users who create users on xwiki.org just to be able to log on forum.xwiki.org for
