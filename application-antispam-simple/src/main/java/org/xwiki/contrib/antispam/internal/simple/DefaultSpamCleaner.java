@@ -62,6 +62,9 @@ import org.xwiki.search.solr.internal.api.FieldUtils;
 import org.xwiki.search.solr.internal.api.SolrIndexer;
 import org.xwiki.user.group.GroupException;
 import org.xwiki.user.group.GroupManager;
+import org.xwiki.wiki.descriptor.WikiDescriptor;
+import org.xwiki.wiki.descriptor.WikiDescriptorManager;
+import org.xwiki.wiki.manager.WikiManagerException;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -111,6 +114,9 @@ public class DefaultSpamCleaner implements SpamCleaner
 
     @Inject
     private SpamCheckerProtectionManager protectionManager;
+
+    @Inject
+    private WikiDescriptorManager wikiDescriptorManager;
 
     @Override
     public List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset)
@@ -282,18 +288,33 @@ public class DefaultSpamCleaner implements SpamCleaner
     {
         List<DocumentReference> candidates = new ArrayList<>();
         String avatarClause = cleanAuthorsWithAvatars ? "" : "and user.avatar = ''";
+        // Note: We exclude users with OIDC xobjects since these users are created for logging on the forum for example
+        // and may not be active on the wiki itself.
+        // Note: We also exclude wiki owners.
         Query query = this.queryManager.createQuery("from doc.object(XWiki.XWikiUsers) as user "
-                + "where doc.date < :date "
-                + avatarClause
-                + "and doc.fullName not in (select distinct obj2.name from BaseObject as obj2 where "
+            + "where doc.date < :date "
+            + avatarClause
+            + "and doc.fullName not in (select distinct obj2.name from BaseObject as obj2 where "
                 + "obj2.className = 'XWiki.OIDC.ConsentClass')",
             Query.XWQL);
         query.bindValue("date", getDateMinusDays(elapsedDays));
+        List<DocumentReference> wikiOwners = getWikiOwners();
         for (String authorReferenceString : query.<String>execute()) {
-            candidates.add(this.userDocumentReferenceResolver.resolve(authorReferenceString));
+            DocumentReference authorReference = this.userDocumentReferenceResolver.resolve(authorReferenceString);
+            if (!wikiOwners.contains(authorReference)) {
+                candidates.add(authorReference);
+            }
         }
-
         return candidates;
+    }
+
+    private List<DocumentReference> getWikiOwners() throws WikiManagerException
+    {
+        List<DocumentReference> wikiOwners = new ArrayList<>();
+        for (WikiDescriptor descriptor : this.wikiDescriptorManager.getAll()) {
+            wikiOwners.add(this.userDocumentReferenceResolver.resolve(descriptor.getOwnerId()));
+        }
+        return wikiOwners;
     }
 
     private Date getDateMinusDays(int elapsedDays)
