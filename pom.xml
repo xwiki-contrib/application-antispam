@@ -29,7 +29,7 @@
   </parent>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>application-antispam</artifactId>
-  <version>1.11</version>
+  <version>1.12-SNAPSHOT</version>
   <name>AntiSpam Tools</name>
   <packaging>pom</packaging>
   <description>Various tools to help fight spam</description>
@@ -45,7 +45,7 @@
     <connection>scm:git:git://github.com/xwiki-contrib/application-antispam.git</connection>
     <developerConnection>scm:git:git@github.com:xwiki-contrib/application-antispam.git</developerConnection>
     <url>https://github.com/xwiki-contrib/application-antispam/tree/master</url>
-    <tag>application-antispam-1.11</tag>
+    <tag>HEAD</tag>
   </scm>
   <developers>
     <developer>
