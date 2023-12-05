@@ -43,6 +43,7 @@ import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.SpaceReference;
 import org.xwiki.model.reference.WikiReference;
+import org.xwiki.user.SuperAdminUserReference;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -134,9 +135,11 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument addressDocument = getDocument(ADDRESSES_DOCUMENT_REFERENCE, xcontext);
+
             // Only log the IP if it's not already in the list
             List<String> loggedIPs = parseContentByLine(addressDocument.getContent());
             if (!loggedIPs.contains(ip)) {
+                setAuthors(addressDocument);
                 addressDocument.setContent(addressDocument.getContent() + "\n" + ip);
                 getXWiki(xcontext).saveDocument(addressDocument, "Adding new spammer ip", true, xcontext);
             }
@@ -153,6 +156,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument authorDocument = getDocument(authorReference, xcontext);
             if (!authorDocument.isNew()) {
+                setAuthors(authorDocument);
                 BaseObject xwikiUserObject = authorDocument.getXObject(USER_XCLASS_REFERENCE);
                 xwikiUserObject.set("active", 0, xcontext);
                 getXWiki(xcontext).saveDocument(authorDocument, "Disabling user considered as spammer", true, xcontext);
@@ -172,7 +176,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             List<String> disabledUsers = parseContentByLine(disabledUsersDocument.getContent());
             String authorReferenceAsString = this.entityReferenceSerializer.serialize(authorReference);
             if (!disabledUsers.contains(authorReferenceAsString)) {
-                disabledUsersDocument.setContent(disabledUsersDocument.getContent() + "\n" + authorReferenceAsString);
+                setAuthors(disabledUsersDocument);
                 getXWiki(xcontext).saveDocument(disabledUsersDocument, String.format("Adding user [%s]",
                     authorReference), true, xcontext);
             }
@@ -250,6 +254,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             String message = String.format("%s - %s - %s", authorReference, documentReference,
                 matchedKeywordsString);
             logDocument.setContent(logDocument.getContent() + "\n" + message);
+            setAuthors(logDocument);
             getXWiki(xcontext).saveDocument(logDocument, "New spam log", true, xcontext);
         } catch (Exception e) {
             throw new AntiSpamException(String.format(
@@ -322,5 +327,19 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             }
         }
         return result;
+    }
+
+    private void setAuthors(XWikiDocument document)
+    {
+        // Set the author to be superadmin, so that the update is done with that user and not with the last
+        // author of the document.
+        // Notes:
+        // - We're setting the effective metadata author so that the change is done with the superadmin user,
+        //   and it's used to compute rights.
+        // - We're setting the original metadata author so that we display the superadmin user in UIs
+        // - We don't need to change the content author since when the content is changed, the content author is
+        //   updated automatically.
+        document.getAuthors().setEffectiveMetadataAuthor(SuperAdminUserReference.INSTANCE);
+        document.getAuthors().setOriginalMetadataAuthor(SuperAdminUserReference.INSTANCE);
     }
 }
