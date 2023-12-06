@@ -262,7 +262,7 @@ public class DefaultSpamCleaner implements SpamCleaner
         int counter = 0;
         for (DocumentReference authorReference : authorReferences) {
             // Has the author done at least one change in the whole wiki or wiki farm?
-            SimpleEventQuery query = new SimpleEventQuery(0, 10);
+            SimpleEventQuery query = new SimpleEventQuery(0, 1);
             // Only look for Page events and for "create", "update", "delete" type of events. We do this to be sure we
             // don't consider liking a document as a valid event we should count.
             query.eq(Event.FIELD_APPLICATION, "xwiki");
