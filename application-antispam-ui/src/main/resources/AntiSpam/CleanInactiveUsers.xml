@@ -60,16 +60,16 @@
   ## - If the user has not clicked on the "delete inactive users button", display the list of
   ##   inactive users that can be deleted.
   ## - Otherwise start the deletion job and display the progress.
-  #set ($inactiveAuthorReferences = $services.antispam.getInactiveAuthors(30, false, 50))
+  #if ("$!request.limit" == '')
+    #set ($limit = 50)
+  #else
+    #set ($limit = $numbertool.toNumber($request.limit))
+  #end
+  #set ($inactiveAuthorReferences = $services.antispam.getInactiveAuthors(30, false, $limit))
   #if ($inactiveAuthorReferences.size() == 0)
     No inactive user found!
   #else
     #if ("$!request.deleteInactiveUsers" != 'Delete Inactive Users')
-      #if ("$!request.limit" == '')
-        #set ($limit = 50)
-      #else
-        #set ($limit = $numbertool.toNumber($request.limit))
-      #end
       Inactive users (max $limit):
       #foreach ($authorReferenceString in $inactiveAuthorReferences)
         * [[{{{$authorReferenceString}}}&gt;&gt;$authorReferenceString]]
@@ -81,6 +81,9 @@
             &lt;span class="buttonwrapper"&gt;&lt;input type="submit" name="deleteInactiveUsers"
               value="Delete Inactive Users" class="button btn-danger"/&gt;&lt;/span&gt;
           &lt;/div&gt;
+          #if("$!request.limit" != '')
+            &lt;input type="hidden" name="limit" value="$request.limit" /&gt;
+          #end
           ## CSRF protection
           &lt;input type="hidden" name="form_token" value="$!{services.csrf.getToken()}" /&gt;
         &lt;/form&gt;
