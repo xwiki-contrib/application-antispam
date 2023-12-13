@@ -288,14 +288,22 @@ public class DefaultSpamCleaner implements SpamCleaner
     {
         List<DocumentReference> candidates = new ArrayList<>();
         String avatarClause = cleanAuthorsWithAvatars ? "" : "and user.avatar = ''";
-        // Note: We exclude users with OIDC xobjects since these users are created for logging on the forum for example
-        // and may not be active on the wiki itself.
-        // Note: We also exclude wiki owners.
+        // Notes:
+        // - We exclude users with OIDC xobjects since these users are created for logging on the forum for example
+        //   and may not be active on the wiki itself.
+        // - We try to exclude users who are watching pages or set up some notifications as it could be a valid use
+        //   case to just register to do that. Note that the code below doesn't catch all cases since nowadays, watching
+        //   pages configuration is stored elsewhere (see http://tinyurl.com/mrys72fn).
+        // - We also exclude wiki owners.
         Query query = this.queryManager.createQuery("from doc.object(XWiki.XWikiUsers) as user "
             + "where doc.date < :date "
             + avatarClause
             + "and doc.fullName not in (select distinct obj2.name from BaseObject as obj2 where "
-                + "obj2.className = 'XWiki.OIDC.ConsentClass')",
+                + "obj2.className = 'XWiki.OIDC.ConsentClass')"
+            + "and doc.fullName not in (select distinct obj3.name from BaseObject as obj3 where "
+                + "obj3.className = 'XWiki.WatchListClass')"
+            + "and doc.fullName not in (select distinct obj4.name from BaseObject as obj4 where "
+                + "obj4.className = 'XWiki.Notifications.Code.NotificationPreferenceClass')",
             Query.XWQL);
         query.bindValue("date", getDateMinusDays(elapsedDays));
         List<DocumentReference> wikiOwners = getWikiOwners();
