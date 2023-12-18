@@ -65,7 +65,7 @@
   #else
     #set ($limit = $numbertool.toNumber($request.limit))
   #end
-  #set ($inactiveAuthorReferences = $services.antispam.getInactiveAuthors(30, false, $limit))
+  #set ($inactiveAuthorReferences = $services.antispam.getInactiveAuthors(30, true, $limit))
   #if ($inactiveAuthorReferences.size() == 0)
     No inactive user found!
   #else
