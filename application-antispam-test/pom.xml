@@ -25,11 +25,11 @@
   <parent>
     <groupId>org.xwiki.contrib</groupId>
     <artifactId>application-antispam</artifactId>
-    <version>1.12.2</version>
+    <version>1.12.3-SNAPSHOT</version>
   </parent>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>application-antispam-test</artifactId>
-  <version>1.12.2</version>
+  <version>1.12.3-SNAPSHOT</version>
   <name>AntiSpam Functional Tests - Parent POM</name>
   <description>AntiSpam Functional Tests - Parent POM</description>
   <packaging>pom</packaging>
