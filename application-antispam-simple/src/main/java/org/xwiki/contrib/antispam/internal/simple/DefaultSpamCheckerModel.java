@@ -43,6 +43,7 @@ import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.SpaceReference;
 import org.xwiki.model.reference.WikiReference;
+import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.user.SuperAdminUserReference;
 
 import com.xpn.xwiki.XWiki;
@@ -136,6 +137,8 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument addressDocument = getDocument(ADDRESSES_DOCUMENT_REFERENCE, xcontext);
+            // Make sure the log is stored as plain text
+            addressDocument.setSyntax(Syntax.PLAIN_1_0);
             // Only log the IP if it's not already in the list
             List<String> loggedIPs = parseContentByLine(addressDocument.getContent());
             if (!loggedIPs.contains(ip)) {
@@ -170,6 +173,8 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument disabledUsersDocument = getDocument(DISABLED_USERS_DOCUMENT_REFERENCE, xcontext);
+            // Make sure the log is stored as plain text
+            disabledUsersDocument.setSyntax(Syntax.PLAIN_1_0);
             // Only log the user if he's not already in the list
             List<String> disabledUsers = parseContentByLine(disabledUsersDocument.getContent());
             String authorReferenceAsString = this.entityReferenceSerializer.serialize(authorReference);
@@ -248,6 +253,8 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
         try {
             XWikiContext xcontext = getXWikiContext();
             XWikiDocument logDocument = getDocument(LOGS_DOCUMENT_REFERENCE, xcontext);
+            // Make sure the log is stored as plain text
+            logDocument.setSyntax(Syntax.PLAIN_1_0);
             String message = String.format("%s - %s - %s", authorReference, documentReference,
                 matchedKeywordsString);
             logDocument.setContent(logDocument.getContent() + "\n" + message);
