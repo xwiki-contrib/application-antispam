@@ -78,12 +78,6 @@
       <version>${platform.version}</version>
       <scope>test</scope>
     </dependency>
-    <!-- TODO: remove when upgrading to XWiki 17.6.0+ -->
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.xwiki.contrib</groupId>
       <artifactId>application-antispam-test-pageobjects</artifactId>
