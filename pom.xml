@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.xwiki.contrib</groupId>
     <artifactId>parent-platform</artifactId>
-    <version>14.10.4</version>
+    <version>14.10-3</version>
   </parent>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>application-antispam</artifactId>
@@ -66,37 +66,4 @@
       </modules>
     </profile>
   </profiles>
-  <build>
-    <pluginManagement>
-      <plugins>
-        <!-- TODO: Remove once the parent is updated to 14.10.20+ -->
-        <plugin>
-          <groupId>fr.inria.gforge.spoon</groupId>
-          <artifactId>spoon-maven-plugin</artifactId>
-          <version>3.8.0</version>
-          <dependencies>
-            <dependency>
-              <groupId>fr.inria.gforge.spoon</groupId>
-              <artifactId>spoon-core</artifactId>
-              <version>10.4.2</version>
-            </dependency>
-          </dependencies>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
-
-  <!--
-    Make sure we don't trigger as transitive dependency things which should not be used directly:
-      * commons-lang:commons-lang
-  -->
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <scope>test</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 </project>
