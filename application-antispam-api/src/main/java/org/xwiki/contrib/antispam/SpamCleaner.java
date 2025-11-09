@@ -41,7 +41,7 @@ public interface SpamCleaner
      * @param nb the number of matching results to return
      * @param offset the start position in the full list of matching results
      * @return the list of references of matching documents and their last authors
-     * @exception AntiSpamException if an error occurs such as a failure to find matching documents
+     * @exception AntiSpamException if an error occurs, such as a failure to find matching documents
      */
     List<MatchingReference> getMatchingDocuments(String solrQueryString, int nb, int offset) throws AntiSpamException;
 
@@ -50,7 +50,7 @@ public interface SpamCleaner
      *
      * @param documentReference the reference to the document to clean
      * @param authorReferences the reference to the authors for which to remove all changes from the document
-     * @param skipActivityStream if true then don't generate events in the Activity Stream for the changes made to
+     * @param skipActivityStream if true, then don't generate events in the Activity Stream for the changes made to
      *        the document
      * @exception AntiSpamException if an error occurs
      */
@@ -73,17 +73,17 @@ public interface SpamCleaner
     /**
      * Find all user references for the following criteria:
      * <ul>
-     *   <li>The user profile page has been created more than elapsedDays ago</li>
+     *   <li>The user profile page was created more than elapsedDays ago</li>
      *   <li>The user has done at least one document update (create, update, delete) in the wiki</li>
      *   <li>The user profile page doesn't have an avatar (if cleanAuthorsWithAvatars is false)</li>
      *   <li>The user profile page doesn't have an XObject of type XWiki.OIDC.ConsentClass. The reason for this check
-     *     is because we can have users who create users on xwiki.org just to be able to log on forum.xwiki.org for
+     *     is that we can have users who create users on xwiki.org just to be able to log on forum.xwiki.org, for
      *     example (or on l10n.xwiki.org). We don't want to consider these users as inactive and remove their
-     *     accounts or they won't be able to log on these other sites...</li>
+     *     accounts, or they won't be able to log on these other sites...</li>
      * </ul>
      *
      * @param elapsedDays number of days that the user profile page has seen a modification
-     * @param cleanAuthorsWithAvatars if true then also clean user profiles having an avatar set
+     * @param cleanAuthorsWithAvatars if true, then also clean user profiles having an avatar set
      * @param count the maximum number of inactive user references to return
      * @return the inactive author references
      * @throws AntiSpamException if an error occurs
@@ -93,7 +93,7 @@ public interface SpamCleaner
         throws AntiSpamException;
 
     /**
-     * @return all the known users, i.e. users that should not be cleaned and that should be filtered out when listing
+     * @return all the known users, i.e., users that should not be cleaned and that should be filtered out when listing
      *         filtered changes
      * @throws AntiSpamException if an error occurs
      * @since 1.8
