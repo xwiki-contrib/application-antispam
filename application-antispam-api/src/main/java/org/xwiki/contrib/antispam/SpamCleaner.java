@@ -60,7 +60,7 @@ public interface SpamCleaner
     /**
      * Find all documents with the passed author.
      *
-     * @param authorReference the author for which to return the list of modified documents (i.e the last author of
+     * @param authorReference the author for which to return the list of modified documents (i.e., the last author of
      *        the returned documents)
      * @param nb the number of results to return
      * @param offset the start position in the full list of results
