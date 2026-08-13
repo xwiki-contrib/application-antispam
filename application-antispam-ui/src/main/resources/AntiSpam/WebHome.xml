@@ -119,10 +119,50 @@
     * $outputMarkup
   #end
 #end
+## -------------------------------------------------------------------
+## Displays the links to navigate inside the paginated list of events.
+## $displayedCount is the number of events displayed on the current page: when it's lower than the page size then
+## there's no further page to display.
+## -------------------------------------------------------------------
+#macro(displayEventStreamPagination $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages $filterCreateEvents $offset $limit $displayedCount)
+  ## Carry over the current filters so that navigating doesn't reset them (the filters are form fields and thus they
+  ## are not part of the current URL when the page has been reached through a navigation link).
+  #set ($navigationParameters = {})
+  #if ($filterKnownUsers)
+    #set ($discard = $navigationParameters.put('filterKnownUsers', 'on'))
+  #end
+  #if ($filterUserPages)
+    #set ($discard = $navigationParameters.put('filterUserPages', 'on'))
+  #end
+  #if ($filterPlayground)
+    #set ($discard = $navigationParameters.put('filterPlaygrounds', 'on'))
+  #end
+  #if ($filterAntispamPages)
+    #set ($discard = $navigationParameters.put('filterAntispamPages', 'on'))
+  #end
+  #if ($filterCreateEvents)
+    #set ($discard = $navigationParameters.put('filterCreateEvents', 'on'))
+  #end
+  #if ("$!request.wikis" != '')
+    #set ($discard = $navigationParameters.put('wikis', $request.wikis))
+  #end
+  &lt;div&gt;
+    #if ($offset &gt; 0)
+      #set ($discard = $navigationParameters.put('offset', $mathtool.max(0, $offset - $limit)))
+      #set ($previousURL = $escapetool.xml($doc.getURL('view', $escapetool.url($navigationParameters))))
+      &lt;span class="buttonwrapper"&gt;&lt;a class="button" href="$previousURL"&gt;Previous Events&lt;/a&gt;&lt;/span&gt;
+    #end
+    #if ($displayedCount == $limit)
+      #set ($discard = $navigationParameters.put('offset', $offset + $limit))
+      #set ($nextURL = $escapetool.xml($doc.getURL('view', $escapetool.url($navigationParameters))))
+      &lt;span class="buttonwrapper"&gt;&lt;a class="button" href="$nextURL"&gt;More Events&lt;/a&gt;&lt;/span&gt;
+    #end
+  &lt;/div&gt;
+#end
 ## ---------------------------------------------------------
 ## Displays an EventStream with checkboxes to remove entries
 ## ---------------------------------------------------------
-#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages $filterCreateEvents)
+#macro(displayEventStream $query $filterFeature $filterKnownUsers $filterUserPages $filterPlayground $filterAntispamPages $filterCreateEvents $offset $limit)
   ## Note: Requires Programming Rights
   #set ($events = $services.antispam.searchEvents($query))
 
@@ -140,6 +180,8 @@
         &lt;label for="filterAntispamPages"&gt;Filter out AntiSpam pages&lt;/label&gt;
         &lt;input type="checkbox" id="filterCreateEvents" name="filterCreateEvents" #if ($filterCreateEvents)checked#end/&gt;
         &lt;label for="filterCreateEvents"&gt;Filter out non-create events&lt;/label&gt;
+        ## Stay on the current page of events when the form is submitted (e.g. when deleting events).
+        &lt;input type="hidden" id="eventsOffset" name="offset" value="$offset"/&gt;
         ## CSRF protection
         &lt;input type="hidden" name="form_token" value="$!{services.csrf.getToken()}" /&gt;
       &lt;/div&gt;
@@ -156,6 +198,9 @@
         class="button btn-danger"/&gt;&lt;/span&gt;
     &lt;/div&gt;
   &lt;/form&gt;
+  #if ($filterFeature)
+    #displayEventStreamPagination($filterKnownUsers, $filterUserPages, $filterPlayground, $filterAntispamPages, $filterCreateEvents, $offset, $limit, $events.size())
+  #end
   {{/html}}
 
 #end
@@ -357,10 +402,14 @@
     #set ($query = $query.eq('type', 'create'))
   #end
   #set ($query = $query.addSort('date', 'DESC'))
-  #if ("$!request.offset" != '')
-    #set ($query = $query.setOffset($request.offset))
+  ## Note: the offset comes from the request and thus it's a String, while the event query expects a number.
+  #set ($eventLimit = 50)
+  #set ($eventOffset = $numbertool.toNumber("$!request.offset"))
+  #if (!$eventOffset || $eventOffset &lt; 0)
+    #set ($eventOffset = 0)
   #end
-  #displayEventStream($query.setLimit(50), true, $filterKnownUsers, $filterUserPages, $filterPlaygrounds, $filterAntispamPages, $filterCreateEvents)
+  #set ($query = $query.setOffset($eventOffset).setLimit($eventLimit))
+  #displayEventStream($query, true, $filterKnownUsers, $filterUserPages, $filterPlaygrounds, $filterAntispamPages, $filterCreateEvents, $eventOffset, $eventLimit)
 #end
 
 #if (!$validCSRFToken)
@@ -513,21 +562,12 @@
     </property>
     <property>
       <code>require(['jquery'], function($) {
-  $('#filterKnownUsers').change(function() {
-    $('#events').submit();
-  })
-  $('#filterUserPages').change(function() {
-    $('#events').submit();
-  })
-  $('#filterPlaygrounds').change(function() {
-    $('#events').submit();
-  })
-  $('#filterAntispamPages').change(function() {
-    $('#events').submit();
-  })
-  $('#filterCreateEvents').change(function() {
-    $('#events').submit();
-  })
+  $('#filterKnownUsers, #filterUserPages, #filterPlaygrounds, #filterAntispamPages, #filterCreateEvents')
+    .change(function() {
+      // Go back to the first page of events since a different filter means a different list of events.
+      $('#eventsOffset').val(0);
+      $('#events').submit();
+    })
 });
 
 </code>
