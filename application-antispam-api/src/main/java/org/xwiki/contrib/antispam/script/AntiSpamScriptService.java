@@ -24,11 +24,11 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
@@ -118,19 +118,24 @@ public class AntiSpamScriptService implements ScriptService
 
     /**
      * @param matchingReferences the list of matching references from which to extract the document reference list
-     * @return the list of all document references extracted from the passed matching references parameter
+     * @return the set of all document references extracted from the passed matching references parameter, sorted
+     *         by their natural order
      */
     @Programming
     public Set<DocumentReference> getLastAuthorReferences(Collection<MatchingReference> matchingReferences)
         throws AntiSpamException
     {
         checkForProgrammingRights();
-        Set<DocumentReference> lastAuthorReferences = new HashSet<>();
+        // Use a sorted set so that the returned authors always come out in the same order: DocumentReference
+        // hash codes are not stable across JVM runs (EntityReference.hashCode() mixes in the identity hash code
+        // of the EntityType enum), and thus a HashSet would display the authors in a different order from one
+        // restart to the next.
+        Set<DocumentReference> lastAuthorReferences = new TreeSet<>();
         for (MatchingReference matchingReference : matchingReferences) {
             // Remove null author references (meaning the guest user AFAIK) since that would cause some NPE down the
             // line when it's used (unless the calling code checks for it, but best to remove it for safety,
             // especially as we don't care about cleaning guest user ;)).
-            if (matchingReference != null) {
+            if (matchingReference != null && matchingReference.getLastAuthorReference() != null) {
                 lastAuthorReferences.add(matchingReference.getLastAuthorReference());
             }
         }
