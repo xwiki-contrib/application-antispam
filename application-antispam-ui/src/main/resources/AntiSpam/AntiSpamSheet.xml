@@ -38,9 +38,10 @@
   <hidden>true</hidden>
   <content>{{velocity}}
 #if ($doc.fullName != "AntiSpam.AntiSpamSheet")
-  {{code language="none"}}
-  $doc.content
-  {{/code}}
+  ## Display the content as text, escaped so that it cannot be interpreted as wiki syntax or HTML.
+  {{html}}
+  &lt;pre&gt;$escapetool.xml($doc.content)&lt;/pre&gt;
+  {{/html}}
 #end
 {{/velocity}}</content>
 </xwikidoc>
