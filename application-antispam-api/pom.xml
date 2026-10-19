@@ -32,6 +32,7 @@
   <description>Spam cleaning and Spam checking APIs</description>
   <properties>
     <xwiki.extension.category>api</xwiki.extension.category>
+    <xwiki.jacoco.instructionRatio>0.15</xwiki.jacoco.instructionRatio>
   </properties>
   <dependencies>
     <dependency>
@@ -53,6 +54,12 @@
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-search-solr-query</artifactId>
       <version>${platform.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.commons</groupId>
+      <artifactId>xwiki-commons-tool-test-component</artifactId>
+      <version>${commons.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
