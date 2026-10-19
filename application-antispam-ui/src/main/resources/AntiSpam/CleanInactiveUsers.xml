@@ -72,7 +72,9 @@
     #if ("$!request.deleteInactiveUsers" != 'Delete Inactive Users')
       Inactive users (max $limit):
       #foreach ($authorReferenceString in $inactiveAuthorReferences)
-        * [[{{{$authorReferenceString}}}&gt;&gt;$authorReferenceString]]
+        #set ($escapedReference = $services.rendering.escape($authorReferenceString, 'xwiki/2.1'))
+        ## Link labels are parsed again as wiki syntax, hence the double escaping.
+        * [[$services.rendering.escape($escapedReference, 'xwiki/2.1')&gt;&gt;doc:$escapedReference]]
       #end
 
       {{html}}

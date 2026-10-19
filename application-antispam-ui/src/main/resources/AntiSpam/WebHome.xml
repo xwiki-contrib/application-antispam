@@ -37,14 +37,23 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
   <content>{{velocity output='false'}}
-## ---------------
-## Displays a user
-## ---------------
-#macro(displayUser $userReference)
+## ----------------------------------------------------------------------------------------------------
+## Displays a user. $isHTML must be true when the output is inside an HTML macro that parses wiki syntax.
+## ----------------------------------------------------------------------------------------------------
+#macro(displayUser $userReference $isHTML)
+  #if ("$!userReference" != '')
+    #set ($userText = "$userReference")
+    #if ($isHTML)
+      #set ($userText = $escapetool.xml($userText))
+    #end
+    #set ($userText = $services.rendering.escape($userText, 'xwiki/2.1'))
+  #end
   #if ($xwiki.exists($userReference))
-    [[$userReference&gt;&gt;$userReference]]##
+    ## Link labels are parsed again as wiki syntax, hence the double escaping.
+    #set ($userTarget = $services.rendering.escape($userReference, 'xwiki/2.1'))
+    [[$services.rendering.escape($userText, 'xwiki/2.1')&gt;&gt;doc:$userTarget]]##
   #elseif ("$!userReference" != '')
-    $userReference##
+    $userText##
   #else
     Guest##
   #end
@@ -67,10 +76,12 @@
     #if ($isCleaningInProgress)
       #set ($outputMarkup = "$services.rendering.escape($documentReference, 'xwiki/2.1')")
     #else
-      #set ($outputMarkup = "[[$services.rendering.escape($documentReference, 'xwiki/2.1')&gt;&gt;$documentReference]]")
+      #set ($escapedReference = $services.rendering.escape($documentReference, 'xwiki/2.1'))
+      ## Link labels are parsed again as wiki syntax, hence the double escaping.
+      #set ($outputMarkup = "[[$services.rendering.escape($escapedReference, 'xwiki/2.1')&gt;&gt;doc:$escapedReference]]")
     #end
     #if ($services.antispam.isProtectedUser($lastAuthorReference, $documentReference))
-      #set ($outputMarkup = "${outputMarkup} {{error}}This change was made by [$lastAuthorReference] and won't be removed since it's a protected user!{{/error}}")
+      #set ($outputMarkup = "${outputMarkup} {{error}}This change was made by [$services.rendering.escape($lastAuthorReference, 'xwiki/2.1')] and won't be removed since it's a protected user!{{/error}}")
     #end
     * $outputMarkup
   #end
@@ -96,16 +107,26 @@
 ## -----------------------------
 #macro(displayEvent $event $isProtectedUser $isForm)
   #if ("$!event.document" != '')
+    #set ($documentLabel = "$event.document (v${event.documentVersion})")
+    #if ($isForm)
+      ## The form is displayed inside an HTML macro that parses wiki syntax.
+      #set ($documentLabel = $escapetool.xml($documentLabel))
+    #end
+    #set ($documentLabel = $services.rendering.escape($documentLabel, 'xwiki/2.1'))
     #if ($xwiki.exists($event.document))
       #set ($viewRevURL = $xwiki.getURL($event.document, 'viewrev', "rev=${event.documentVersion}"))
+      #set ($viewRevURL = $services.rendering.escape($viewRevURL, 'xwiki/2.1'))
       #set ($diffURL = $xwiki.getURL($event.document, 'viewrev', "viewer=changes&amp;rev2=${event.documentVersion}"))
-      #set ($documentText = "[[$event.document (v${event.documentVersion})&gt;&gt;path:$viewRevURL]] ([[diff&gt;&gt;path:$diffURL]])")
+      #set ($diffURL = $services.rendering.escape($diffURL, 'xwiki/2.1'))
+      ## Link labels are parsed again as wiki syntax, hence the double escaping.
+      #set ($documentLabel = $services.rendering.escape($documentLabel, 'xwiki/2.1'))
+      #set ($documentText = "[[$documentLabel&gt;&gt;path:$viewRevURL]] ([[diff&gt;&gt;path:$diffURL]])")
     #else
-      #set ($documentText = "$event.document (v${event.documentVersion})")
+      #set ($documentText = $documentLabel)
     #end
-    #set ($outputMarkup = "$services.rendering.escape($event.date, 'xwiki/2.1') - #displayUser($event.user) - ${documentText} - $services.rendering.escape($event.type, 'xwiki/2.1')")
+    #set ($outputMarkup = "$services.rendering.escape($event.date, 'xwiki/2.1') - #displayUser($event.user, $isForm) - ${documentText} - $services.rendering.escape($event.type, 'xwiki/2.1')")
   #else
-    #set ($outputMarkup = "$services.rendering.escape($event.date, 'xwiki/2.1') - #displayUser($event.user) - $services.rendering.escape($event.type, 'xwiki/2.1')")
+    #set ($outputMarkup = "$services.rendering.escape($event.date, 'xwiki/2.1') - #displayUser($event.user, $isForm) - $services.rendering.escape($event.type, 'xwiki/2.1')")
   #end
   #if ($isProtectedUser)
     #set ($outputMarkup = "${outputMarkup} {{error}}Event won't be removed since it's been made by an Admin{{/error}}")
@@ -233,7 +254,9 @@
           ** Page already cleaned!
         #end
       #else
-        * [[$services.rendering.escape($lastAuthorReference, 'xwiki/2.1')&gt;&gt;$lastAuthorReference]]
+        #set ($escapedReference = $services.rendering.escape($lastAuthorReference, 'xwiki/2.1'))
+        ## Link labels are parsed again as wiki syntax, hence the double escaping.
+        * [[$services.rendering.escape($escapedReference, 'xwiki/2.1')&gt;&gt;doc:$escapedReference]]
       #end
       #set ($discard = $validAuthorReferences.add($lastAuthorReference))
     #end
