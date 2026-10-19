@@ -84,7 +84,7 @@
               value="Delete Inactive Users" class="button btn-danger"/&gt;&lt;/span&gt;
           &lt;/div&gt;
           #if("$!request.limit" != '')
-            &lt;input type="hidden" name="limit" value="$request.limit" /&gt;
+            &lt;input type="hidden" name="limit" value="$escapetool.xml($request.limit)" /&gt;
           #end
           ## CSRF protection
           &lt;input type="hidden" name="form_token" value="$!{services.csrf.getToken()}" /&gt;

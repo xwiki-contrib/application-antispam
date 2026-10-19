@@ -99,4 +99,17 @@ class CleanInactiveUsersPageTest extends PageTest
         assertTrue(html.select("b").isEmpty(), html.html());
         assertEquals(userReference.toString(), html.select("li a").text(), html.html());
     }
+
+    @Test
+    void displayFormWithSpecialCharactersInLimitParameter() throws Exception
+    {
+        String limit = "\"/>{{/html}}{{info}}x{{/info}}<b>y</b>";
+        this.request.put("limit", limit);
+
+        Document html = renderHTMLPage(CLEAN_INACTIVE_USERS_REFERENCE);
+
+        assertTrue(html.select(".box.infomessage").isEmpty(), html.html());
+        assertTrue(html.select("b").isEmpty(), html.html());
+        assertEquals(limit, html.select("form input[name=limit]").attr("value"), html.html());
+    }
 }

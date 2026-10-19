@@ -50,6 +50,7 @@ import org.xwiki.test.page.XWikiSyntax21ComponentList;
 
 import com.xpn.xwiki.doc.XWikiDocument;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -73,6 +74,8 @@ class WebHomePageTest extends PageTest
     private static final DocumentReference WEB_HOME_REFERENCE = new DocumentReference("xwiki", "AntiSpam", "WebHome");
 
     private static final String SPECIAL_NAME = "a]]{{info}}x{{/info}}<b>y</b>[[z";
+
+    private static final String SPECIAL_VALUE = "\"/>{{/html}}{{info}}x{{/info}}<b>y</b>";
 
     @MockComponent
     private ExtendedRenderingConfiguration extendedRenderingConfiguration;
@@ -151,6 +154,19 @@ class WebHomePageTest extends PageTest
         assertTrue(linkTexts.contains(authorReference.toString()), linkTexts.toString());
         String errorText = html.select(".box.errormessage").text();
         assertTrue(errorText.contains("This change was made by [" + authorReference + "]"), errorText);
+    }
+
+    @Test
+    void displaySearchFormWithSpecialCharactersInRequestParameters() throws Exception
+    {
+        this.request.put("query", SPECIAL_VALUE);
+        this.request.put("user", SPECIAL_VALUE);
+
+        Document html = renderHTMLPage(WEB_HOME_REFERENCE);
+
+        assertNoInterpretedMarkup(html);
+        assertEquals(SPECIAL_VALUE, html.select("#search input[name=query]").attr("value"));
+        assertEquals(SPECIAL_VALUE, html.select("#search input[name=user]").attr("value"));
     }
 
     private void assertNoInterpretedMarkup(Document html)
