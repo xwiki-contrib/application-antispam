@@ -31,7 +31,7 @@
   <name>AntiSpam Tools - Simple Spam Checker</name>
   <description>Checks for spam using banned keywords and IP addresses</description>
   <properties>
-    <xwiki.jacoco.instructionRatio>0.04</xwiki.jacoco.instructionRatio>
+    <xwiki.jacoco.instructionRatio>0.22</xwiki.jacoco.instructionRatio>
     <xwiki.extension.category>api</xwiki.extension.category>
   </properties>
   <dependencies>
@@ -44,6 +44,10 @@
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-user-api</artifactId>
       <version>${platform.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>

@@ -20,18 +20,26 @@
 package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.StringReader;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.xwiki.contrib.antispam.SpamCheckerResult;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.test.LogLevel;
+import org.xwiki.test.junit5.LogCaptureExtension;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 import org.xwiki.test.junit5.mockito.MockComponent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,6 +52,14 @@ import static org.mockito.Mockito.when;
 @ComponentTest
 class SimpleSpamCheckerTest
 {
+    /**
+     * Content on which the {@code a.*z} keyword regex takes a time quadratic in the content length to evaluate.
+     */
+    private static final String SLOW_CONTENT = StringUtils.repeat('a', 200000);
+
+    @RegisterExtension
+    private LogCaptureExtension logCapture = new LogCaptureExtension(LogLevel.WARN);
+
     @InjectMockComponents
     private SimpleSpamChecker spamChecker;
 
@@ -71,5 +87,47 @@ class SimpleSpamCheckerTest
         assertEquals("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx spammer2", result.getMatchedContent().get("spammer2"));
 
         verify(this.model).logMatchingSpamKeywords(result.getMatchedContent(), authorReference, documentReference);
+    }
+
+    @Test
+    void isSpamWhenMatchingTakesTooLong() throws Exception
+    {
+        FieldUtils.writeField(this.spamChecker, "matchTimeout", 100L, true);
+        when(this.model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "a.*z"));
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("documentReference", new DocumentReference("wiki", "Space", "Page"));
+
+        SpamCheckerResult result = assertTimeoutPreemptively(Duration.ofSeconds(10),
+            () -> this.spamChecker.isSpam(new StringReader(SLOW_CONTENT), parameters));
+
+        assertFalse(result.isSpam());
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Stopped looking for spam keywords in the content of [wiki:Space.Page] after [100] ms. Only the "
+            + "keywords found before that have been considered. Please verify if the content contains spam manually.",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void isSpamWhenMatchingTakesTooLongAfterAMatch() throws Exception
+    {
+        FieldUtils.writeField(this.spamChecker, "matchTimeout", 100L, true);
+        when(this.model.getSpamKeywords()).thenReturn(Arrays.asList("spam1", "a.*z"));
+
+        Map<String, Object> parameters = new HashMap<>();
+        DocumentReference authorReference = new DocumentReference("wiki", "XWiki", "Author1");
+        parameters.put("authorReference", authorReference);
+        DocumentReference documentReference = new DocumentReference("wiki", "Space", "Page");
+        parameters.put("documentReference", documentReference);
+
+        SpamCheckerResult result = assertTimeoutPreemptively(Duration.ofSeconds(10),
+            () -> this.spamChecker.isSpam(new StringReader("spam1 " + SLOW_CONTENT), parameters));
+
+        assertTrue(result.isSpam());
+        assertEquals(1, result.getMatchedContent().size());
+        assertEquals("spam1 " + StringUtils.repeat('a', 29), result.getMatchedContent().get("spam1"));
+        verify(this.model).logMatchingSpamKeywords(result.getMatchedContent(), authorReference, documentReference);
+        assertEquals(1, this.logCapture.size());
+        assertTrue(this.logCapture.getMessage(0).startsWith("Stopped looking for spam keywords"));
     }
 }

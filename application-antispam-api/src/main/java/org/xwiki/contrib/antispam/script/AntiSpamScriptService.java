@@ -173,11 +173,13 @@ public class AntiSpamScriptService implements ScriptService
      * @param content the content to check for spam
      * @param parameters the parameters to pass to the spam checker
      * @return the result of the check, with the details
-     * @throws AntiSpamException if an error occurs
+     * @throws AntiSpamException if an error occurs or if the current author doesn't have Programming Rights
      */
+    @Programming
     public SpamCheckerResult isSpam(String checkerHint, String content, Map<String, Object> parameters)
         throws AntiSpamException
     {
+        checkForProgrammingRights();
         return getSpamChecker(checkerHint).isSpam(new StringReader(content), parameters);
     }
 
@@ -188,11 +190,13 @@ public class AntiSpamScriptService implements ScriptService
      * @param document the document to check for spam
      * @param parameters the parameters to pass to the spam checker
      * @return the result of the check, with the details
-     * @throws AntiSpamException if an error occurs
+     * @throws AntiSpamException if an error occurs or if the current author doesn't have Programming Rights
      */
+    @Programming
     public SpamCheckerResult isSpam(String checkerHint, Document document, Map<String, Object> parameters)
         throws AntiSpamException
     {
+        checkForProgrammingRights();
         try {
             return isSpam(checkerHint, document.getXMLContent(), parameters);
         } catch (Exception e) {
@@ -235,19 +239,29 @@ public class AntiSpamScriptService implements ScriptService
     }
 
     /**
+     * @return the status of the current clean authors job, or {@code null} if there's no such job or if the current
+     *         author doesn't have Programming Rights
      * @since 1.8
      */
+    @Programming
     public JobStatus getCurrentCleanAuthorJobStatus()
     {
+        if (!hasProgrammingRights()) {
+            return null;
+        }
         Job job = this.jobExecutor.getJob(Arrays.asList(DeleteAuthorsJob.TYPE));
         return job == null ? null : job.getStatus();
     }
 
     /**
+     * @return the references to the known users
+     * @throws AntiSpamException if an error occurs or if the current author doesn't have Programming Rights
      * @since 1.8
      */
+    @Programming
     public List<DocumentReference> getKnownUserReferences() throws AntiSpamException
     {
+        checkForProgrammingRights();
         return new ArrayList<>(this.cleaner.getKnownUserReferences());
     }
 
@@ -326,18 +340,25 @@ public class AntiSpamScriptService implements ScriptService
     /**
      * @param authorReference the reference to the author to check
      * @param documentReference the reference to the document on which to check if the user has Admin rights
-     * @return {@code true} if the passed user is a protected user, {@code false} otherwise
+     * @return {@code true} if the passed user is a protected user, {@code false} otherwise or if the current author
+     *         doesn't have Programming Rights
      * @since 1.9
      */
+    @Programming
     public boolean isProtectedUser(DocumentReference authorReference, DocumentReference documentReference)
     {
-        return this.protectionManager.isProtectedUser(authorReference, documentReference);
+        return hasProgrammingRights() && this.protectionManager.isProtectedUser(authorReference, documentReference);
     }
 
     private void checkForProgrammingRights() throws AntiSpamException
     {
-        if (!this.authorizationManager.hasAccess(Right.PROGRAM)) {
+        if (!hasProgrammingRights()) {
             throw new AntiSpamException("You need Programming Rights to access this api");
         }
+    }
+
+    private boolean hasProgrammingRights()
+    {
+        return this.authorizationManager.hasAccess(Right.PROGRAM);
     }
 }

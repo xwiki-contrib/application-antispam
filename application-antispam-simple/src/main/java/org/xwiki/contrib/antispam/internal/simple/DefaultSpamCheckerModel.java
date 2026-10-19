@@ -160,7 +160,7 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             if (!authorDocument.isNew()) {
                 BaseObject xwikiUserObject = authorDocument.getXObject(USER_XCLASS_REFERENCE);
                 xwikiUserObject.set("active", 0, xcontext);
-                saveDocument(authorDocument, "Disabling user considered as spammer", xcontext);
+                saveUserDocument(authorDocument, "Disabling user considered as spammer", xcontext);
             }
         } catch (Exception e) {
             throw new AntiSpamException(String.format("Failed to disable user [%s]", authorReference), e);
@@ -330,6 +330,17 @@ public class DefaultSpamCheckerModel implements SpamCheckerModel
             }
         }
         return result;
+    }
+
+    private void saveUserDocument(XWikiDocument document, String message, XWikiContext xcontext)
+        throws XWikiException
+    {
+        // Display the superadmin user as the author of this change in the history, but keep the effective metadata
+        // author and the content author unchanged: the user profile contains xobjects that have been added by other
+        // users (usually the user itself), and the authors used to compute the rights of these xobjects must not
+        // change because an xproperty of the user xobject has been modified.
+        document.getAuthors().setOriginalMetadataAuthor(SuperAdminUserReference.INSTANCE);
+        getXWiki(xcontext).saveDocument(document, message, true, xcontext);
     }
 
     private void saveDocument(XWikiDocument document, String message, XWikiContext xcontext) throws XWikiException
