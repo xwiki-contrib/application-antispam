@@ -25,10 +25,14 @@ import java.util.Collections;
 import java.util.Map;
 
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.ArgumentCaptor;
 import org.xwiki.bridge.event.DocumentUpdatingEvent;
+import org.xwiki.container.Container;
+import org.xwiki.container.servlet.ServletRequest;
 import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.contrib.antispam.SpamCheckerResult;
@@ -43,6 +47,7 @@ import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiDocument;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -72,6 +77,9 @@ class SimpleSpamCheckerListenerTest
 
     @MockComponent
     private SpamCheckerProtectionManager protectionManager;
+
+    @MockComponent
+    private Container container;
 
     @Test
     void onEventWhenSpamAndAdminUser() throws Exception
@@ -153,5 +161,79 @@ class SimpleSpamCheckerListenerTest
         when(document.getDocumentReference()).thenReturn(documentReference);
         when(document.toXML(true, false, false, false, xcontext)).thenReturn("some xml");
         return document;
+    }
+
+    @Test
+    void onEventWhenSpamUsesFirstXFFHeaderIPByDefault() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam("192.0.2.1, 198.51.100.2", -1, "203.0.113.3");
+
+        assertEquals("192.0.2.1", parameters.get("ip"));
+        verify(this.model).logSpamAddress("192.0.2.1");
+    }
+
+    @Test
+    void onEventWhenSpamUsesConfiguredXFFHeaderIPPosition() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam("192.0.2.1, 2001:db8::1, 198.51.100.2", 1, "203.0.113.3");
+
+        assertEquals("2001:db8::1", parameters.get("ip"));
+        verify(this.model).logSpamAddress("2001:db8::1");
+    }
+
+    @Test
+    void onEventWhenSpamAndNoXFFHeader() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam(null, -1, "203.0.113.3");
+
+        assertEquals("203.0.113.3", parameters.get("ip"));
+        verify(this.model).logSpamAddress("203.0.113.3");
+    }
+
+    @Test
+    void onEventWhenSpamAndXFFHeaderValueIsNotAnIP() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam("{{/code}}{{info}}x{{/info}}, 198.51.100.2", -1, "203.0.113.3");
+
+        assertFalse(parameters.containsKey("ip"));
+        verify(this.model, never()).logSpamAddress(any());
+    }
+
+    @Test
+    void onEventWhenSpamAndXFFHeaderValueIsAnIPWithScope() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam("fe80::1%]]", -1, "203.0.113.3");
+
+        assertFalse(parameters.containsKey("ip"));
+        verify(this.model, never()).logSpamAddress(any());
+    }
+
+    @Test
+    void onEventWhenSpamAndXFFHeaderValueIsAHostName() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam("example.org", -1, "203.0.113.3");
+
+        assertFalse(parameters.containsKey("ip"));
+        verify(this.model, never()).logSpamAddress(any());
+    }
+
+    private Map<String, Object> saveSpam(String xffHeaderValue, int xffHeaderIPPosition, String remoteAddress)
+        throws Exception
+    {
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+        when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn(xffHeaderValue);
+        when(httpServletRequest.getRemoteAddr()).thenReturn(remoteAddress);
+        when(this.container.getRequest()).thenReturn(new ServletRequest(httpServletRequest));
+        when(this.model.getXFFHeaderIPPosition()).thenReturn(xffHeaderIPPosition);
+
+        XWikiContext xcontext = setUpSave();
+        when(this.checker.isSpam(any(Reader.class), any(Map.class))).thenReturn(new SpamCheckerResult(true));
+
+        DocumentReference documentReference = new DocumentReference("wiki", "space", "page");
+        this.listener.onEvent(new DocumentUpdatingEvent(), createDocument(documentReference, xcontext), xcontext);
+
+        ArgumentCaptor<Map<String, Object>> parametersCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(this.checker).isSpam(any(Reader.class), parametersCaptor.capture());
+        return parametersCaptor.getValue();
     }
 }

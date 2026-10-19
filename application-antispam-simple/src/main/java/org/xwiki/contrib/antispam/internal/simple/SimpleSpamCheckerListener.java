@@ -50,6 +50,7 @@ import org.xwiki.observation.EventListener;
 import org.xwiki.observation.event.CancelableEvent;
 import org.xwiki.observation.event.Event;
 
+import com.google.common.net.InetAddresses;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiDocument;
 
@@ -61,6 +62,8 @@ public class SimpleSpamCheckerListener implements EventListener
     private static final String XCONTEXT_MARKER_KEY = "simpleSpamCheckerListener";
 
     private static final String ANTISPAM_SPACE = "AntiSpam";
+
+    private static final String IP_ADDRESS_CHARACTERS = "0123456789abcdefABCDEF.:";
 
     @Inject
     private Logger logger;
@@ -254,17 +257,38 @@ public class SimpleSpamCheckerListener implements EventListener
                 // Since this cannot be guessed, we've left it to the user of this extension to configure.
                 int position = this.model.getXFFHeaderIPPosition();
                 String[] ips = StringUtils.split(xffHeaderValue, ", ");
+                String headerIP;
                 if (position >= 0 && (ips.length - 1 - position >= 0)) {
-                    ip = ips[ips.length - 1 - position];
+                    headerIP = ips[ips.length - 1 - position];
                 } else {
                     // No position defined or invalid position, default to the first one!
-                    ip = ips[0];
+                    headerIP = ips[0];
                 }
-            }
-            if (ip == null) {
+                // Only use values that are IP addresses. Otherwise, don't use any IP since the remote address can be
+                // the address of a proxy, shared by all users.
+                if (isIPAddress(headerIP)) {
+                    ip = headerIP;
+                } else {
+                    this.logger.debug("Ignoring the X-Forwarded-For header since the value at the configured position "
+                        + "is not a valid IP address.");
+                }
+            } else {
                 ip = servletRequest.getRemoteAddr();
             }
         }
         return ip;
+    }
+
+    /**
+     * Checks that the passed string is a textual IPv4 or IPv6 address literal, without performing any DNS lookup.
+     *
+     * @param value the value to check
+     * @return {@code true} if the value is an IP address, {@code false} otherwise
+     */
+    private boolean isIPAddress(String value)
+    {
+        // Only accept hexadecimal digits, dots and colons, since the IPv6 scope id that can follow a '%' character
+        // accepts any character.
+        return StringUtils.containsOnly(value, IP_ADDRESS_CHARACTERS) && InetAddresses.isInetAddress(value);
     }
 }
