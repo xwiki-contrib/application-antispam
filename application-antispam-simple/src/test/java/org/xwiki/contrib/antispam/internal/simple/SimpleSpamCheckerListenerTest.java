@@ -164,12 +164,21 @@ class SimpleSpamCheckerListenerTest
     }
 
     @Test
-    void onEventWhenSpamUsesFirstXFFHeaderIPByDefault() throws Exception
+    void onEventWhenSpamUsesLastXFFHeaderIPByDefault() throws Exception
     {
         Map<String, Object> parameters = saveSpam("192.0.2.1, 198.51.100.2", -1, "203.0.113.3");
 
-        assertEquals("192.0.2.1", parameters.get("ip"));
-        verify(this.model).logSpamAddress("192.0.2.1");
+        assertEquals("198.51.100.2", parameters.get("ip"));
+        verify(this.model).logSpamAddress("198.51.100.2");
+    }
+
+    @Test
+    void onEventWhenSpamUsesLastXFFHeaderIPWhenConfiguredPositionIsTooLarge() throws Exception
+    {
+        Map<String, Object> parameters = saveSpam("192.0.2.1, 198.51.100.2", 5, "203.0.113.3");
+
+        assertEquals("198.51.100.2", parameters.get("ip"));
+        verify(this.model).logSpamAddress("198.51.100.2");
     }
 
     @Test
@@ -193,7 +202,7 @@ class SimpleSpamCheckerListenerTest
     @Test
     void onEventWhenSpamAndXFFHeaderValueIsNotAnIP() throws Exception
     {
-        Map<String, Object> parameters = saveSpam("{{/code}}{{info}}x{{/info}}, 198.51.100.2", -1, "203.0.113.3");
+        Map<String, Object> parameters = saveSpam("198.51.100.2, {{/code}}{{info}}x{{/info}}", -1, "203.0.113.3");
 
         assertFalse(parameters.containsKey("ip"));
         verify(this.model, never()).logSpamAddress(any());

@@ -261,8 +261,9 @@ public class SimpleSpamCheckerListener implements EventListener
                 if (position >= 0 && (ips.length - 1 - position >= 0)) {
                     headerIP = ips[ips.length - 1 - position];
                 } else {
-                    // No position defined or invalid position, default to the first one!
-                    headerIP = ips[0];
+                    // No position defined or invalid position, default to the last one, which is the one added by the
+                    // closest proxy. The first ones are sent by the client and can contain any value.
+                    headerIP = ips[ips.length - 1];
                 }
                 // Only use values that are IP addresses. Otherwise, don't use any IP since the remote address can be
                 // the address of a proxy, shared by all users.
