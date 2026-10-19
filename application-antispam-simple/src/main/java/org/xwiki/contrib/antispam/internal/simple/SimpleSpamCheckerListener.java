@@ -42,7 +42,9 @@ import org.xwiki.contrib.antispam.AntiSpamException;
 import org.xwiki.contrib.antispam.SpamCheckerProtectionManager;
 import org.xwiki.contrib.antispam.SpamChecker;
 import org.xwiki.contrib.antispam.SpamCheckerResult;
+import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.observation.EventListener;
 import org.xwiki.observation.event.CancelableEvent;
@@ -57,6 +59,8 @@ import com.xpn.xwiki.doc.XWikiDocument;
 public class SimpleSpamCheckerListener implements EventListener
 {
     private static final String XCONTEXT_MARKER_KEY = "simpleSpamCheckerListener";
+
+    private static final String ANTISPAM_SPACE = "AntiSpam";
 
     @Inject
     private Logger logger;
@@ -110,8 +114,8 @@ public class SimpleSpamCheckerListener implements EventListener
 
         XWikiDocument document = (XWikiDocument) source;
 
-        // Don't check for spam when editing a page located in the AntiSpam space & in any excluded spaces
-        if (document.getDocumentReference().getLastSpaceReference().getName().equals("AntiSpam")
+        // Don't check for spam when editing a page located in the top-level AntiSpam space & in any excluded spaces
+        if (isInAntiSpamSpace(document.getDocumentReference())
             || this.model.getExcludedSpaces().contains(this.entityReferenceSerializer.serialize(
             document.getDocumentReference().getParent())))
         {
@@ -161,6 +165,18 @@ public class SimpleSpamCheckerListener implements EventListener
             logger.error("Failed to check for spam in content of [{}]. Please verify if the content contains spam "
                 + "manually ", document.getDocumentReference(), e);
         }
+    }
+
+    /**
+     * @param documentReference the reference to the document being saved
+     * @return {@code true} if the document is located directly in the application's top-level {@code AntiSpam} space
+     *         (e.g. {@code AntiSpam.Keywords}), {@code false} otherwise (e.g. for {@code Sandbox.AntiSpam.Page})
+     */
+    private boolean isInAntiSpamSpace(DocumentReference documentReference)
+    {
+        EntityReference spaceReference = documentReference.getParent();
+        return ANTISPAM_SPACE.equals(spaceReference.getName())
+            && spaceReference.getParent().getType() == EntityType.WIKI;
     }
 
     private String getSpamMessage(SpamCheckerResult result, DocumentReference documentReference,

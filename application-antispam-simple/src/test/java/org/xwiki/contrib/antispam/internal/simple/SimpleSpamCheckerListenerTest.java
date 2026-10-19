@@ -20,6 +20,7 @@
 package org.xwiki.contrib.antispam.internal.simple;
 
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -44,6 +45,8 @@ import com.xpn.xwiki.doc.XWikiDocument;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -97,5 +100,58 @@ class SimpleSpamCheckerListenerTest
         assertEquals(1, logCapture.size());
         assertEquals("User [userwiki:userspace.userpage] tried to save document [wiki:space.page] which contains spam. "
             + "Since that user is protected, it has not been disabled.", logCapture.getMessage(0));
+    }
+
+    @Test
+    void onEventWhenDocumentInAntiSpamSpace() throws Exception
+    {
+        DocumentReference documentReference = new DocumentReference("wiki", "AntiSpam", "Keywords");
+        XWikiContext xcontext = setUpSave();
+
+        this.listener.onEvent(new DocumentUpdatingEvent(), createDocument(documentReference, xcontext), xcontext);
+
+        verify(this.checker, never()).isSpam(any(Reader.class), any(Map.class));
+    }
+
+    @Test
+    void onEventWhenDocumentInNestedSpaceNamedAntiSpam() throws Exception
+    {
+        DocumentReference documentReference =
+            new DocumentReference("wiki", Arrays.asList("Sandbox", "AntiSpam"), "Page");
+        XWikiContext xcontext = setUpSave();
+
+        this.listener.onEvent(new DocumentUpdatingEvent(), createDocument(documentReference, xcontext), xcontext);
+
+        verify(this.checker).isSpam(any(Reader.class), any(Map.class));
+    }
+
+    @Test
+    void onEventWhenDocumentInSpaceNestedUnderAntiSpam() throws Exception
+    {
+        DocumentReference documentReference =
+            new DocumentReference("wiki", Arrays.asList("AntiSpam", "Other"), "Page");
+        XWikiContext xcontext = setUpSave();
+
+        this.listener.onEvent(new DocumentUpdatingEvent(), createDocument(documentReference, xcontext), xcontext);
+
+        verify(this.checker).isSpam(any(Reader.class), any(Map.class));
+    }
+
+    private XWikiContext setUpSave() throws Exception
+    {
+        XWikiContext xcontext = mock(XWikiContext.class);
+        when(xcontext.getUserReference()).thenReturn(new DocumentReference("userwiki", "userspace", "userpage"));
+        when(this.model.iSpamCheckingActive()).thenReturn(true);
+        when(this.model.getExcludedSpaces()).thenReturn(Collections.emptyList());
+        when(this.checker.isSpam(any(Reader.class), any(Map.class))).thenReturn(new SpamCheckerResult(false));
+        return xcontext;
+    }
+
+    private XWikiDocument createDocument(DocumentReference documentReference, XWikiContext xcontext) throws Exception
+    {
+        XWikiDocument document = mock(XWikiDocument.class);
+        when(document.getDocumentReference()).thenReturn(documentReference);
+        when(document.toXML(true, false, false, false, xcontext)).thenReturn("some xml");
+        return document;
     }
 }
